@@ -52,6 +52,7 @@
     <div class="max-w-5xl mx-auto">
         <!-- Antraštė -->
         <header class="mb-8 text-center">
+            <div id="timestamp" class="text-sm text-red-600 font-semibold mb-2"></div>
             <h1 class="text-3xl font-bold text-gray-800 mb-2">Bendra Javų Suvestinė</h1>
         </header>
 
@@ -289,6 +290,12 @@
             grainSelect.appendChild(option);
         }
         grainSelect.value = state.selectedGrain;
+
+        // Nustatome datos ir laiko rodymą
+        const now = new Date();
+        const formattedDate = now.toISOString().slice(0, 10);
+        const formattedTime = now.toTimeString().slice(0, 5);
+        document.getElementById('timestamp').textContent = `Duomenys atnaujinti: ${formattedDate} ${formattedTime}`;
 
         // Filtru pakeitimai iskviecia render su specialiu pozymiu
         document.getElementById('grain-select').addEventListener('change', () => renderDashboard(true));
