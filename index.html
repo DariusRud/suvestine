@@ -83,29 +83,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Rinkos Indeksai -->
-        <div class="mb-8 p-6 main-card rounded-xl">
-             <h2 class="section-title mb-4">Rinkos Indeksai</h2>
-             <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                 <div>
-                    <label for="market-date" class="block text-sm font-medium text-gray-700 mb-2">Data</label>
-                    <input type="date" id="market-date" class="form-input w-full rounded-md shadow-sm">
-                 </div>
-                 <div>
-                    <label for="matif-rapeseed" class="block text-sm font-medium text-gray-700 mb-2">Matif Rapsai (€/t)</label>
-                    <input type="text" inputmode="decimal" id="matif-rapeseed" class="form-input w-full rounded-md shadow-sm">
-                </div>
-                <div>
-                    <label for="matif-wheat" class="block text-sm font-medium text-gray-700 mb-2">Matif Kviečiai (€/t)</label>
-                    <input type="text" inputmode="decimal" id="matif-wheat" class="form-input w-full rounded-md shadow-sm">
-                </div>
-                 <div>
-                    <label for="fob-malt" class="block text-sm font-medium text-gray-700 mb-2">FOB Salyklas (€/t)</label>
-                    <input type="text" inputmode="decimal" id="fob-malt" class="form-input w-full rounded-md shadow-sm">
-                </div>
-             </div>
-        </div>
         
         <!-- Pirkimai -->
         <div class="mb-8 p-6 main-card rounded-xl">
@@ -284,19 +261,25 @@
             <!-- Vidutiniai Rodikliai -->
             <div class="p-6 main-card rounded-xl">
                 <h3 class="font-semibold text-gray-700 mb-4">2. Prognozės Vidurkiai</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-                    <div>
-                        <div class="text-sm font-medium text-gray-500">Vidutinė Pirkimo Kaina (€/t)</div>
-                        <div id="summary-avg-buy-price" class="text-2xl font-bold text-gray-800 mt-1">€0,00</div>
-                    </div>
-                    <div>
-                        <div class="text-sm font-medium text-gray-500">Vidutinė Pardavimo Kaina (€/t)</div>
-                        <div id="summary-avg-sell-price" class="text-2xl font-bold text-gray-800 mt-1">€0,00</div>
-                    </div>
-                    <div>
-                        <div class="text-sm font-medium text-gray-500">Pelnas / Nuostolis (€/t)</div>
-                        <div id="summary-profit-per-ton" class="text-2xl font-bold text-gray-800 mt-1">€0,00</div>
-                    </div>
+                <div class="summary-row">
+                    <span class="summary-label">Vidutinė pirkimo kaina (€/t)</span>
+                    <span id="summary-avg-buy-price" class="summary-value text-lg">€0,00</span>
+                </div>
+                 <div class="summary-row">
+                    <span class="summary-label">Vidutinė faktinių pardavimų kaina (€/t)</span>
+                    <span id="summary-avg-actual-sell-price" class="summary-value text-lg">€0,00</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label font-semibold">Faktinis pelnas / nuostolis (€/t)</span>
+                    <span id="summary-actual-profit-per-ton" class="summary-value text-lg font-semibold">€0,00</span>
+                </div>
+                 <div class="summary-row">
+                    <span class="summary-label font-semibold">Prognozuojamas pelnas / nuostolis (€/t)</span>
+                    <span id="summary-projected-profit-per-ton" class="summary-value text-lg font-semibold">€0,00</span>
+                </div>
+                <div class="summary-row summary-total">
+                    <span class="summary-label font-bold">Bendras pelnas / nuostolis (€/t)</span>
+                    <span id="summary-total-profit-per-ton" class="summary-value text-xl font-bold">€0,00</span>
                 </div>
             </div>
 
@@ -330,7 +313,6 @@
         return `${prefix} ${formattedVal}`;
     };
     const formatCurrencyPerTon = (val) => {
-        // This formatter correctly displays negative signs and uses 2 decimal places
         return new Intl.NumberFormat('lt-LT', { 
             style: 'currency', 
             currency: 'EUR',
@@ -371,7 +353,6 @@
         const fixedRatio = 0.4;
         const priceAdjustment = 2;
         
-        // Parduotos dalies savikaina (COGS)
         const costOfGoodsSold = data.totalSoldTonnes * avgBuyPrice;
         const cogsFixedTonnes = data.totalSoldTonnes * fixedRatio;
         const cogsUnfixedTonnes = data.totalSoldTonnes * (1 - fixedRatio);
@@ -380,7 +361,6 @@
         const cogsUnfixedValue = costOfGoodsSold - cogsFixedValue;
         const cogsUnfixedPrice = cogsUnfixedTonnes > 0 ? cogsUnfixedValue / cogsUnfixedTonnes : 0;
 
-        // Neparduoto kiekio savikaina
         const openPositionCost = openPosition * avgBuyPrice;
         const fixedOpenTonnes = openPosition * fixedRatio;
         const unfixedOpenTonnes = openPosition * (1 - fixedRatio);
@@ -389,7 +369,6 @@
         const unfixedOpenValue = openPositionCost - fixedOpenValue;
         const unfixedOpenPrice = unfixedOpenTonnes > 0 ? unfixedOpenValue / unfixedOpenTonnes : 0;
         
-        // Parduoto kiekio pajamos
         const fixedSoldTonnes = data.totalSoldTonnes * fixedRatio;
         const unfixedSoldTonnes = data.totalSoldTonnes * (1 - fixedRatio);
         const fixedSellPrice = avgSellPrice - priceAdjustment;
@@ -397,7 +376,6 @@
         const unfixedSoldValue = data.totalSoldValue - fixedSoldValue;
         const unfixedSellPrice = unfixedSoldTonnes > 0 ? unfixedSoldValue / unfixedSoldTonnes : 0;
 
-        // --- Detalizacijos atvaizdavimas ---
         document.getElementById('cogs-fixed-price').textContent = formatCurrency(cogsFixedPrice);
         document.getElementById('cogs-fixed-qty').textContent = formatTonnes(cogsFixedTonnes);
         document.getElementById('cogs-fixed-total').textContent = formatCurrency(cogsFixedValue);
@@ -407,7 +385,6 @@
         document.getElementById('cogs-total-qty').textContent = formatTonnes(data.totalSoldTonnes);
         document.getElementById('cogs-total-price').textContent = formatCurrency(avgBuyPrice);
         document.getElementById('cogs-total-sum').textContent = formatCurrency(costOfGoodsSold);
-
         document.getElementById('open-fixed-price').textContent = formatCurrency(fixedOpenPrice);
         document.getElementById('open-fixed-qty').textContent = formatTonnes(fixedOpenTonnes);
         document.getElementById('open-fixed-total').textContent = formatCurrency(fixedOpenValue);
@@ -417,7 +394,6 @@
         document.getElementById('details-open-qty').textContent = formatTonnes(openPosition);
         document.getElementById('details-open-price').textContent = formatCurrency(avgBuyPrice);
         document.getElementById('details-open-total').textContent = formatCurrency(openPositionCost);
-        
         document.getElementById('sell-fixed-price').textContent = formatCurrency(fixedSellPrice);
         document.getElementById('sell-fixed-qty').textContent = formatTonnes(fixedSoldTonnes);
         document.getElementById('sell-fixed-total').textContent = formatCurrency(fixedSoldValue);
@@ -428,13 +404,14 @@
         document.getElementById('details-sell-price').textContent = formatCurrency(avgSellPrice);
         document.getElementById('details-sell-total').textContent = formatCurrency(data.totalSoldValue);
 
-        // --- Apibendrinimo atvaizdavimas ---
         const actualProfit = data.totalSoldValue - costOfGoodsSold;
         document.getElementById('summary-sold-qty').textContent = formatTonnes(data.totalSoldTonnes);
         document.getElementById('summary-actual-income').textContent = formatCurrency(data.totalSoldValue, true);
         document.getElementById('summary-actual-cogs').textContent = formatCurrency(costOfGoodsSold, true);
-        document.getElementById('summary-actual-profit').textContent = formatCurrency(actualProfit);
-        document.getElementById('summary-actual-profit').classList.toggle('text-red-600', actualProfit < 0);
+        const summaryActualProfitEl = document.getElementById('summary-actual-profit');
+        summaryActualProfitEl.textContent = formatCurrency(actualProfit);
+        summaryActualProfitEl.classList.toggle('text-red-600', actualProfit < 0);
+        summaryActualProfitEl.classList.toggle('text-green-600', actualProfit >= 0);
         
         const projectedSellPrice = parseFloat(document.getElementById('projected-sell-price').value.replace(',', '.')) || 0;
         const projectedIncome = openPosition * projectedSellPrice;
@@ -443,27 +420,49 @@
         document.getElementById('summary-open-qty').textContent = formatTonnes(openPosition);
         document.getElementById('projected-income').textContent = formatCurrency(projectedIncome, true);
         document.getElementById('projected-cogs').textContent = formatCurrency(openPositionCost, true);
-        document.getElementById('projected-profit').textContent = formatCurrency(projectedProfit);
-        document.getElementById('projected-profit').classList.toggle('text-red-600', projectedProfit < 0);
+        const projectedProfitEl = document.getElementById('projected-profit');
+        projectedProfitEl.textContent = formatCurrency(projectedProfit);
+        projectedProfitEl.classList.toggle('text-red-600', projectedProfit < 0);
+        projectedProfitEl.classList.toggle('text-green-600', projectedProfit >= 0);
         
         const totalProjectedProfit = actualProfit + projectedProfit;
-        document.getElementById('total-summary-actual-profit').textContent = formatCurrency(actualProfit);
-        document.getElementById('total-summary-projected-profit').textContent = formatCurrency(projectedProfit, true);
-        document.getElementById('total-projected-profit').textContent = formatCurrency(totalProjectedProfit);
-        document.getElementById('total-projected-profit').classList.toggle('text-red-400', totalProjectedProfit < 0);
-        document.getElementById('total-projected-profit').classList.toggle('text-green-400', totalProjectedProfit >= 0);
+        const totalSummaryActualProfitEl = document.getElementById('total-summary-actual-profit');
+        totalSummaryActualProfitEl.textContent = formatCurrency(actualProfit);
+        totalSummaryActualProfitEl.classList.toggle('text-red-400', actualProfit < 0);
+        totalSummaryActualProfitEl.classList.toggle('text-green-400', actualProfit >= 0);
+
+        const totalSummaryProjectedProfitEl = document.getElementById('total-summary-projected-profit');
+        totalSummaryProjectedProfitEl.textContent = formatCurrency(projectedProfit, true);
+        totalSummaryProjectedProfitEl.classList.toggle('text-red-400', projectedProfit < 0);
+        totalSummaryProjectedProfitEl.classList.toggle('text-green-400', projectedProfit >= 0);
+        
+        const totalProjectedProfitEl = document.getElementById('total-projected-profit');
+        totalProjectedProfitEl.textContent = formatCurrency(totalProjectedProfit);
+        totalProjectedProfitEl.classList.toggle('text-red-400', totalProjectedProfit < 0);
+        totalProjectedProfitEl.classList.toggle('text-green-400', totalProjectedProfit >= 0);
 
         // Vidurkių blokas
-        const totalProjectedRevenue = data.totalSoldValue + projectedIncome;
-        const totalAvgSellPrice = data.totalPurchasedTonnes > 0 ? totalProjectedRevenue / data.totalPurchasedTonnes : 0;
+        const actualProfitPerTon = data.totalSoldTonnes > 0 ? actualProfit / data.totalSoldTonnes : 0;
+        const projectedProfitPerTon = openPosition > 0 ? projectedProfit / openPosition : 0;
         const totalProfitPerTon = data.totalPurchasedTonnes > 0 ? totalProjectedProfit / data.totalPurchasedTonnes : 0;
         
         document.getElementById('summary-avg-buy-price').textContent = formatCurrencyPerTon(avgBuyPrice);
-        document.getElementById('summary-avg-sell-price').textContent = formatCurrencyPerTon(totalAvgSellPrice);
-        const summaryProfitPerTonEl = document.getElementById('summary-profit-per-ton');
-        summaryProfitPerTonEl.textContent = formatCurrencyPerTon(totalProfitPerTon);
-        summaryProfitPerTonEl.classList.toggle('text-red-600', totalProfitPerTon < 0);
-        summaryProfitPerTonEl.classList.toggle('text-green-600', totalProfitPerTon >= 0);
+        document.getElementById('summary-avg-actual-sell-price').textContent = formatCurrencyPerTon(avgSellPrice);
+        
+        const summaryActualProfitPerTonEl = document.getElementById('summary-actual-profit-per-ton');
+        summaryActualProfitPerTonEl.textContent = formatCurrencyPerTon(actualProfitPerTon);
+        summaryActualProfitPerTonEl.classList.toggle('text-red-600', actualProfitPerTon < 0);
+        summaryActualProfitPerTonEl.classList.toggle('text-green-600', actualProfitPerTon >= 0);
+
+        const summaryProjectedProfitPerTonEl = document.getElementById('summary-projected-profit-per-ton');
+        summaryProjectedProfitPerTonEl.textContent = formatCurrencyPerTon(projectedProfitPerTon);
+        summaryProjectedProfitPerTonEl.classList.toggle('text-red-600', projectedProfitPerTon < 0);
+        summaryProjectedProfitPerTonEl.classList.toggle('text-green-600', projectedProfitPerTon >= 0);
+        
+        const totalProfitPerTonEl = document.getElementById('summary-total-profit-per-ton');
+        totalProfitPerTonEl.textContent = formatCurrencyPerTon(totalProfitPerTon);
+        totalProfitPerTonEl.classList.toggle('text-red-600', totalProfitPerTon < 0);
+        totalProfitPerTonEl.classList.toggle('text-green-600', totalProfitPerTon >= 0);
     }
     
     // --- PRADINIS INICIALIZAVIMAS ---
