@@ -8,7 +8,7 @@
     <style>
         body {
             background-color: #f3f4f6; 
-            color: #1f2937; 
+            color: #1f2f37; 
             font-family: 'Inter', sans-serif;
         }
         .main-card {
@@ -19,7 +19,7 @@
         .form-input, .form-select {
             background-color: #ffffff;
             border: 1px solid #d1d5db;
-            color: #1f2937;
+            color: #1f2f37;
         }
         .form-input:focus, .form-select:focus {
             --tw-ring-color: #2563eb;
@@ -207,20 +207,29 @@
 
             <!-- Būsimos Pajamos -->
             <div class="p-6 main-card rounded-xl">
-                <h3 class="font-semibold text-gray-700 mb-4">2. Būsimų Pajamų Prognozė</h3>
+                <h3 class="font-semibold text-gray-700 mb-4">2. Prognozė (neparduotam kiekiui)</h3>
                 <div class="summary-row">
                     <span class="summary-label">Kiekis (neparduota)</span>
                     <span id="summary-open-qty" class="summary-value">0 t</span>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end py-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 items-center pt-4">
                      <div>
                         <label for="projected-sell-price" class="block text-sm font-medium text-gray-700 mb-1">Jeigu parduotume po (€/t):</label>
                         <input type="text" inputmode="decimal" id="projected-sell-price" class="form-input w-full rounded-md shadow-sm">
                     </div>
-                    <div class="text-right">
-                         <div class="text-sm font-medium text-gray-700">Prognozuojamos pajamos</div>
-                         <div id="projected-income" class="text-2xl font-bold text-blue-600">€0</div>
-                    </div>
+                    <div></div>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Prognozuojamos pajamos</span>
+                    <span id="projected-income" class="summary-value text-green-600">+ €0</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Savikaina (neparduota)</span>
+                    <span id="projected-cogs" class="summary-value text-red-600">- €0</span>
+                </div>
+                <div class="summary-row summary-total">
+                    <span class="summary-label">Pelnas / Nuostolis (prognozuojamas)</span>
+                    <span id="projected-profit" class="summary-value text-lg">€0</span>
                 </div>
             </div>
 
@@ -232,15 +241,11 @@
                     <span id="total-summary-actual-profit" class="summary-value text-amber-100">€0</span>
                 </div>
                 <div class="summary-row border-amber-700">
-                    <span class="summary-label text-amber-200">Prognozuojamos pajamos (už likutį)</span>
-                    <span id="total-summary-projected-income" class="summary-value text-amber-100">+ €0</span>
-                </div>
-                <div class="summary-row border-amber-700">
-                    <span class="summary-label text-amber-200">Neparduoto kiekio savikaina</span>
-                    <span id="total-summary-open-cogs" class="summary-value text-amber-100">- €0</span>
+                    <span class="summary-label text-amber-200">Prognozuojamas pelnas / nuostolis (už likutį)</span>
+                    <span id="total-summary-projected-profit" class="summary-value text-amber-100">€0</span>
                 </div>
                 <div class="summary-row summary-total border-amber-600">
-                    <span class="summary-label text-lg text-amber-200">Bendras Prognozuojamas Pelnas / Nuostolis</span>
+                    <span class="summary-label text-lg text-amber-100">Bendras Prognozuojamas Pelnas / Nuostolis</span>
                     <span id="total-projected-profit" class="summary-value text-2xl">€0</span>
                 </div>
             </div>
@@ -373,13 +378,18 @@
         
         const projectedSellPrice = parseFloat(document.getElementById('projected-sell-price').value.replace(',', '.')) || 0;
         const projectedIncome = openPosition * projectedSellPrice;
+        const projectedProfit = projectedIncome - openPositionCost;
+        
         document.getElementById('summary-open-qty').textContent = formatTonnes(openPosition);
-        document.getElementById('projected-income').textContent = formatCurrency(projectedIncome);
+        document.getElementById('projected-income').textContent = formatCurrency(projectedIncome, true);
+        document.getElementById('projected-cogs').textContent = formatCurrency(openPositionCost, true);
+        document.getElementById('projected-profit').textContent = formatCurrency(projectedProfit);
+        document.getElementById('projected-profit').classList.toggle('text-red-600', projectedProfit < 0);
+        
 
-        const totalProjectedProfit = actualProfit + projectedIncome - openPositionCost;
+        const totalProjectedProfit = actualProfit + projectedProfit;
         document.getElementById('total-summary-actual-profit').textContent = formatCurrency(actualProfit);
-        document.getElementById('total-summary-projected-income').textContent = formatCurrency(projectedIncome, true);
-        document.getElementById('total-summary-open-cogs').textContent = formatCurrency(openPositionCost, true);
+        document.getElementById('total-summary-projected-profit').textContent = formatCurrency(projectedProfit, true);
         document.getElementById('total-projected-profit').textContent = formatCurrency(totalProjectedProfit);
         document.getElementById('total-projected-profit').classList.toggle('text-red-400', totalProjectedProfit < 0);
         document.getElementById('total-projected-profit').classList.toggle('text-green-400', totalProjectedProfit >= 0);
