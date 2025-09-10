@@ -7,27 +7,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            background-color: #f3f4f6; /* Šviesiai pilkas fonas */
-            color: #1f2937; /* Tamsus tekstas */
+            background-color: #f3f4f6; 
+            color: #1f2937; 
             font-family: 'Inter', sans-serif;
         }
-        .kpi-card {
+        .main-card {
             background-color: #ffffff;
             border: 1px solid #e5e7eb;
-            transition: transform 0.2s, box-shadow 0.2s;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-        }
-        .kpi-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        .kpi-value {
-            font-size: 2.25rem;
-            font-weight: 700;
-        }
-        .kpi-label {
-            font-size: 0.875rem;
-            color: #6b7280;
         }
         .form-input, .form-select {
             background-color: #ffffff;
@@ -39,28 +26,51 @@
             border-color: #2563eb;
         }
         .section-title {
-            border-bottom: 2px solid #e5e7eb;
-            padding-bottom: 0.5rem;
             font-size: 1.25rem;
             font-weight: 600;
             color: #374151;
+        }
+        .summary-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1rem;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+        .summary-label {
+            color: #4b5563;
+        }
+        .summary-value {
+            font-weight: 600;
+            font-family: 'mono', monospace;
+            text-align: right;
+        }
+        .summary-total {
+            font-weight: 700;
+            font-size: 1.125rem;
+            border-top: 2px solid #d1d5db;
+            margin-top: 0.75rem;
         }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
-    <div class="max-w-5xl mx-auto">
+    <div class="max-w-3xl mx-auto">
         <!-- Antraštė -->
         <header class="mb-8 text-center">
-            <div id="timestamp" class="text-sm text-red-600 font-semibold mb-2"></div>
+            <div id="timestamp" class="text-sm text-gray-500 font-semibold mb-2"></div>
             <h1 class="text-3xl font-bold text-gray-800 mb-2">Bendra Javų Suvestinė</h1>
         </header>
 
-        <!-- Filtrai ir Simuliacijos Skydelis -->
-        <div class="mb-8 p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
+        <!-- Filtrai -->
+        <div class="mb-8 p-6 main-card rounded-xl">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label for="grain-select" class="block text-sm font-medium text-gray-700 mb-2">Javų Rūšis</label>
+                    <label for="grain-select" class="block text-sm font-medium text-gray-700 mb-2">Kultūra</label>
                     <select id="grain-select" class="form-select w-full rounded-md shadow-sm"></select>
                 </div>
                 <div>
@@ -72,90 +82,170 @@
                     </select>
                 </div>
             </div>
-             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                 <div>
-                    <label for="sim-sell-price" class="block text-sm font-medium text-gray-700 mb-2">Prognozuojama pardavimo kaina (€/t)</label>
-                    <input type="number" id="sim-sell-price" value="219" class="form-input w-full rounded-md shadow-sm">
-                </div>
-                <div>
-                    <label for="sim-buy-price" class="block text-sm font-medium text-gray-700 mb-2">Prognozuojama pirkimo kaina (€/t)</label>
-                    <input type="number" id="sim-buy-price" value="198" class="form-input w-full rounded-md shadow-sm">
-                </div>
-             </div>
         </div>
-
-        <!-- Prognozė -->
-        <div class="mb-10">
-            <h2 class="section-title mb-6">Prognozė (įvertinus neparduotą kiekį)</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="kpi-card p-6 rounded-lg text-center">
-                    <div class="kpi-label">Prognozuojamas Pelnas/Nuostolis</div>
-                    <div id="kpi-projected-profit" class="kpi-value">€0</div>
-                    <p class="text-sm text-gray-500 mt-1">Pagal įvestas kainas</p>
-                </div>
-                <div class="kpi-card p-6 rounded-lg text-center">
-                    <div id="kpi-open-position" class="kpi-value">0 t</div>
-                    <p class="text-sm text-gray-500 mt-1">Neparduotas kiekis</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Faktinė Būsena -->
-        <div class="mb-10">
-            <h2 class="section-title mb-6">Faktinė Būsena (pagal sutartis)</h2>
-             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="kpi-card p-6 rounded-lg text-center">
-                    <div class="kpi-label">Faktinis Pelnas/Nuostolis</div>
-                    <div id="kpi-actual-profit" class="kpi-value">€0</div>
-                    <p class="text-sm text-gray-500 mt-1">Pajamos - Išlaidos</p>
-                </div>
-                <div class="kpi-card p-6 rounded-lg text-center">
-                    <div class="kpi-label">Vid. Pirkimo Kaina</div>
-                    <div id="kpi-avg-buy" class="kpi-value">€0</div>
-                    <p class="text-sm text-gray-500 mt-1">Pagal faktines sutartis</p>
-                </div>
-                <div class="kpi-card p-6 rounded-lg text-center">
-                    <div class="kpi-label">Vid. Pardavimo Kaina</div>
-                    <div id="kpi-avg-sell" class="kpi-value">€0</div>
-                    <p class="text-sm text-gray-500 mt-1">Pagal faktines sutartis</p>
-                </div>
-            </div>
-        </div>
-
-
+        
         <!-- Detalizacija -->
-        <div class="p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
-            <h2 class="text-xl font-bold text-gray-800 mb-6">Detalizacija</h2>
-            <div class="space-y-4">
-                <!-- Antraštės -->
-                <div class="grid grid-cols-4 gap-4 pb-2 border-b">
-                    <span class="font-semibold text-gray-500 text-sm">Rodiklis</span>
-                    <span class="font-semibold text-gray-500 text-sm text-right">Kiekis</span>
-                    <span class="font-semibold text-gray-500 text-sm text-right">Vid. Kaina</span>
-                    <span class="font-semibold text-gray-500 text-sm text-right">Bendra Suma</span>
+        <div class="mb-8 p-6 main-card rounded-xl">
+            <h2 class="section-title mb-6">Detalizacija</h2>
+            <div class="grid grid-cols-1 gap-6">
+                <!-- Nupirktas Kiekis (Parduota dalis) -->
+                <div class="p-4 bg-gray-50 rounded-lg border">
+                    <h3 class="font-bold text-gray-800 mb-4">NUPIRKTAS KIEKIS, T. <span class="font-normal text-green-600">(PARDUOTA)</span></h3>
+                    <div class="space-y-3 text-sm">
+                         <div class="grid grid-cols-4 gap-4 text-xs text-gray-500 font-semibold">
+                            <span class="col-span-1">Tipas</span>
+                            <span class="text-right">Savikaina</span>
+                            <span class="text-right">Kiekis</span>
+                            <span class="text-right">Savikainos Suma</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-4 items-center">
+                            <span class="text-gray-600">Fiksuota kaina:</span>
+                            <span id="cogs-fixed-price" class="text-right font-mono">€0</span>
+                            <span id="cogs-fixed-qty" class="text-right font-mono">0 t</span>
+                            <span id="cogs-fixed-total" class="font-bold text-right font-mono">€0</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-4 items-center">
+                            <span class="text-gray-600">Nefiksuota kaina:</span>
+                            <span id="cogs-unfixed-price" class="text-right font-mono">€0</span>
+                            <span id="cogs-unfixed-qty" class="text-right font-mono">0 t</span>
+                            <span id="cogs-unfixed-total" class="font-bold text-right font-mono">€0</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-4 items-center pt-3 border-t mt-3">
+                            <span class="font-bold text-gray-700">Viso:</span>
+                            <span id="cogs-total-price" class="text-right font-mono font-bold text-base">€0</span>
+                            <span id="cogs-total-qty" class="text-right font-mono font-bold text-base">0 t</span>
+                            <span id="cogs-total-sum" class="text-right font-mono font-bold text-base">€0</span>
+                        </div>
+                    </div>
                 </div>
-                <!-- Pirkimo Informacija -->
-                <div class="grid grid-cols-4 gap-4 items-center">
-                    <span class="font-medium text-gray-700">Pirkimai</span>
-                    <span id="details-buy-qty" class="text-right font-mono text-lg">0 t</span>
-                    <span id="details-buy-price" class="text-right font-mono text-lg">€0</span>
-                    <span id="details-buy-total" class="text-right font-mono text-lg font-bold">€0</span>
+                 <!-- Nupirktas Kiekis (Neparduota dalis) -->
+                <div class="p-4 bg-gray-50 rounded-lg border">
+                    <h3 class="font-bold text-gray-800 mb-4">NUPIRKTAS KIEKIS, T. <span class="font-normal text-red-600">(NEPARDUOTAS)</span></h3>
+                    <div class="space-y-3 text-sm">
+                         <div class="grid grid-cols-4 gap-4 text-xs text-gray-500 font-semibold">
+                            <span class="col-span-1">Tipas</span>
+                            <span class="text-right">Savikaina</span>
+                            <span class="text-right">Kiekis</span>
+                            <span class="text-right">Savikainos Suma</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-4 items-center">
+                            <span class="text-gray-600">Fiksuota kaina:</span>
+                            <span id="open-fixed-price" class="text-right font-mono">€0</span>
+                            <span id="open-fixed-qty" class="text-right font-mono">0 t</span>
+                            <span id="open-fixed-total" class="font-bold text-right font-mono">€0</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-4 items-center">
+                            <span class="text-gray-600">Nefiksuota kaina:</span>
+                            <span id="open-unfixed-price" class="text-right font-mono">€0</span>
+                            <span id="open-unfixed-qty" class="text-right font-mono">0 t</span>
+                            <span id="open-unfixed-total" class="font-bold text-right font-mono">€0</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-4 items-center pt-3 border-t mt-3">
+                            <span class="font-bold text-gray-700">Viso:</span>
+                            <span id="details-open-price" class="text-right font-mono font-bold text-base">€0</span>
+                            <span id="details-open-qty" class="text-right font-mono font-bold text-base">0 t</span>
+                            <span id="details-open-total" class="text-right font-mono font-bold text-base">€0</span>
+                        </div>
+                    </div>
                 </div>
-                <!-- Pardavimo Informacija -->
-                <div class="grid grid-cols-4 gap-4 items-center">
-                    <span class="font-medium text-gray-700">Pardavimai</span>
-                    <span id="details-sell-qty" class="text-right font-mono text-lg">0 t</span>
-                    <span id="details-sell-price" class="text-right font-mono text-lg">€0</span>
-                    <span id="details-sell-total" class="text-right font-mono text-lg font-bold">€0</span>
-                </div>
-                 <!-- Neparduotas Kiekis -->
-                <div class="grid grid-cols-4 gap-4 items-center pt-4 border-t mt-4">
-                    <span class="font-medium text-gray-700">Neparduotas kiekis</span>
-                    <span id="details-open-qty" class="text-right font-mono text-lg font-bold">0 t</span>
-                    <span class="col-span-2"></span> <!-- Empty cells -->
+                <!-- Parduotas Kiekis -->
+                <div class="p-4 bg-gray-50 rounded-lg border">
+                    <h3 class="font-bold text-gray-800 mb-4">PARDUOTAS KIEKIS, T.</h3>
+                     <div class="space-y-3 text-sm">
+                         <div class="grid grid-cols-4 gap-4 text-xs text-gray-500 font-semibold">
+                            <span class="col-span-1">Tipas</span>
+                            <span class="text-right">Kaina</span>
+                            <span class="text-right">Kiekis</span>
+                            <span class="text-right">Suma</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-4 items-center">
+                            <span class="text-gray-600">Fiksuota kaina:</span>
+                            <span id="sell-fixed-price" class="text-right font-mono">€0</span>
+                            <span id="sell-fixed-qty" class="text-right font-mono">0 t</span>
+                            <span id="sell-fixed-total" class="font-bold text-right font-mono">€0</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-4 items-center">
+                            <span class="text-gray-600">Nefiksuota kaina:</span>
+                            <span id="sell-unfixed-price" class="text-right font-mono">€0</span>
+                            <span id="sell-unfixed-qty" class="text-right font-mono">0 t</span>
+                            <span id="sell-unfixed-total" class="font-bold text-right font-mono">€0</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-4 items-center pt-3 border-t mt-3">
+                            <span class="font-bold text-gray-700">Viso:</span>
+                            <span id="details-sell-price" class="text-right font-mono font-bold text-base">€0</span>
+                            <span id="details-sell-qty" class="text-right font-mono font-bold text-base">0 t</span>
+                            <span id="details-sell-total" class="text-right font-mono font-bold text-base">€0</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- Apibendrinta Ataskaita -->
+        <div class="space-y-8">
+            <h2 class="section-title mb-4">Apibendrinimas</h2>
+            <!-- Faktinė Būsena -->
+            <div class="p-6 main-card rounded-xl">
+                <h3 class="font-semibold text-gray-700 mb-4">1. Faktinė Būsena (pagal jau įvykdytus sandorius)</h3>
+                <div class="summary-row">
+                    <span class="summary-label">Parduotas kiekis</span>
+                    <span id="summary-sold-qty" class="summary-value">0 t</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Gautos pajamos</span>
+                    <span id="summary-actual-income" class="summary-value text-green-600">+ €0</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Parduoto kiekio savikaina</span>
+                    <span id="summary-actual-cogs" class="summary-value text-red-600">- €0</span>
+                </div>
+                <div class="summary-row summary-total">
+                    <span class="summary-label">Pelnas / Nuostolis (faktinis)</span>
+                    <span id="summary-actual-profit" class="summary-value text-lg">€0</span>
+                </div>
+            </div>
+
+            <!-- Būsimos Pajamos -->
+            <div class="p-6 main-card rounded-xl">
+                <h3 class="font-semibold text-gray-700 mb-4">2. Būsimų Pajamų Prognozė</h3>
+                <div class="summary-row">
+                    <span class="summary-label">Neparduotas kiekis</span>
+                    <span id="summary-open-qty" class="summary-value">0 t</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end py-4">
+                     <div>
+                        <label for="projected-sell-price" class="block text-sm font-medium text-gray-700 mb-1">Jeigu parduotume po (€/t):</label>
+                        <input type="text" inputmode="decimal" id="projected-sell-price" class="form-input w-full rounded-md shadow-sm">
+                    </div>
+                    <div class="text-right">
+                         <div class="text-sm font-medium text-gray-700">Prognozuojamos pajamos</div>
+                         <div id="projected-income" class="text-2xl font-bold text-blue-600">€0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bendra Prognozė -->
+            <div class="p-6 main-card rounded-xl bg-gray-800 text-white">
+                <h3 class="font-semibold text-white mb-4">3. Bendra Prognozė (Faktas + Prognozė)</h3>
+                <div class="summary-row border-gray-600">
+                    <span class="summary-label text-gray-300">Faktinis pelnas / nuostolis</span>
+                    <span id="total-summary-actual-profit" class="summary-value text-gray-100">€0</span>
+                </div>
+                <div class="summary-row border-gray-600">
+                    <span class="summary-label text-gray-300">Prognozuojamos pajamos (už likutį)</span>
+                    <span id="total-summary-projected-income" class="summary-value text-gray-100">+ €0</span>
+                </div>
+                <div class="summary-row border-gray-600">
+                    <span class="summary-label text-gray-300">Neparduoto kiekio savikaina</span>
+                    <span id="total-summary-open-cogs" class="summary-value text-gray-100">- €0</span>
+                </div>
+                <div class="summary-row summary-total border-gray-500">
+                    <span class="summary-label text-lg">Bendras Prognozuojamas Pelnas / Nuostolis</span>
+                    <span id="total-projected-profit" class="summary-value text-2xl">€0</span>
+                </div>
+            </div>
+        </div>
+
     </div>
 
 <script>
@@ -168,44 +258,27 @@
                 'po': { totalPurchasedTonnes: 24900, totalPurchaseValue: 4950560, totalSoldTonnes: 19400, totalSoldValue: 4266984 }
             }
         },
-        'pasariniai_kvieciai': {
-            name: 'Pašariniai kviečiai',
-            periods: {
-                'iki': { totalPurchasedTonnes: 40000, totalPurchaseValue: 7600000, totalSoldTonnes: 35000, totalSoldValue: 7350000 },
-                'po': { totalPurchasedTonnes: 45000, totalPurchaseValue: 8550000, totalSoldTonnes: 37000, totalSoldValue: 7770000 }
-            }
-        },
-        'rapsai': {
-            name: 'Rapsai',
-            periods: {
-                'iki': { totalPurchasedTonnes: 15000, totalPurchaseValue: 6750000, totalSoldTonnes: 18000, totalSoldValue: 8460000 },
-                'po': { totalPurchasedTonnes: 10000, totalPurchaseValue: 4500000, totalSoldTonnes: 8000, totalSoldValue: 3760000 }
-            }
-        }
+        'mieziai': { name: 'Miežiai', periods: { 'iki': { totalPurchasedTonnes: 30000, totalPurchaseValue: 5700000, totalSoldTonnes: 25000, totalSoldValue: 5000000 }, 'po': { totalPurchasedTonnes: 20000, totalPurchaseValue: 3800000, totalSoldTonnes: 18000, totalSoldValue: 3600000 }}},
+        'kvieciai': { name: 'Kviečiai', periods: { 'iki': { totalPurchasedTonnes: 40000, totalPurchaseValue: 7600000, totalSoldTonnes: 35000, totalSoldValue: 7350000 }, 'po': { totalPurchasedTonnes: 45000, totalPurchaseValue: 8550000, totalSoldTonnes: 37000, totalSoldValue: 7770000 }}},
+        'salyklas': { name: 'Salyklas', periods: { 'iki': { totalPurchasedTonnes: 5000, totalPurchaseValue: 2250000, totalSoldTonnes: 4000, totalSoldValue: 1920000 }, 'po': { totalPurchasedTonnes: 6000, totalPurchaseValue: 2700000, totalSoldTonnes: 5500, totalSoldValue: 2640000 }}},
+        'rapsai': { name: 'Rapsai', periods: { 'iki': { totalPurchasedTonnes: 15000, totalPurchaseValue: 6750000, totalSoldTonnes: 18000, totalSoldValue: 8460000 }, 'po': { totalPurchasedTonnes: 10000, totalPurchaseValue: 4500000, totalSoldTonnes: 8000, totalSoldValue: 3760000 }}}
     };
 
     // --- APLIKACIJOS BŪSENA (STATE) ---
-    const state = {
-        selectedGrain: 'salykliniai_mieziai',
-        selectedPeriod: 'visas',
-    };
+    const state = { selectedGrain: 'salykliniai_mieziai', selectedPeriod: 'visas' };
     
     // --- PAGALBINĖS FUNKCIJOS ---
-    const formatCurrency = (value) => new Intl.NumberFormat('lt-LT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
-    const formatTonnes = (value) => `${new Intl.NumberFormat('lt-LT', { useGrouping: true }).format(Math.round(value))} t`;
-    const round = (value) => Math.round(value);
+     const formatCurrency = (val, sign) => {
+        const prefix = sign && val > 0 ? '+' : (sign && val < 0 ? '-' : '');
+        const formattedVal = new Intl.NumberFormat('lt-LT', { style: 'currency', currency: 'EUR' }).format(Math.abs(val));
+        return `${prefix} ${formattedVal}`;
+    };
+    const formatTonnes = (val) => `${new Intl.NumberFormat('lt-LT').format(Math.round(val))} t`;
 
     function getFilteredData() {
-        const grainKeys = state.selectedGrain === 'viso' ? Object.keys(allData) : [state.selectedGrain];
+        const grainKeys = [state.selectedGrain]; 
         const periodKeys = state.selectedPeriod === 'visas' ? ['iki', 'po'] : [state.selectedPeriod];
-
-        const result = {
-            totalPurchasedTonnes: 0,
-            totalPurchaseValue: 0,
-            totalSoldTonnes: 0,
-            totalSoldValue: 0,
-        };
-
+        const result = { totalPurchasedTonnes: 0, totalPurchaseValue: 0, totalSoldTonnes: 0, totalSoldValue: 0 };
         for (const grainKey of grainKeys) {
             for (const periodKey of periodKeys) {
                 const data = allData[grainKey].periods[periodKey];
@@ -221,68 +294,100 @@
     }
 
     // --- RENDERINIMO FUNKCIJOS ---
-    function renderDashboard(isFilterChange = false) {
+    function renderDashboard() {
         state.selectedGrain = document.getElementById('grain-select').value;
         state.selectedPeriod = document.getElementById('period-select').value;
         
-        const filteredData = getFilteredData();
-        const { totalPurchasedTonnes, totalPurchaseValue, totalSoldTonnes, totalSoldValue } = filteredData;
+        const data = getFilteredData();
+        const openPosition = data.totalPurchasedTonnes - data.totalSoldTonnes;
+        const avgBuyPrice = data.totalPurchasedTonnes > 0 ? data.totalPurchaseValue / data.totalPurchasedTonnes : 0;
+        const avgSellPrice = data.totalSoldTonnes > 0 ? data.totalSoldValue / data.totalSoldTonnes : 0;
+
+        const fixedRatio = 0.4;
+        const priceAdjustment = 2;
         
-        const openPosition = totalPurchasedTonnes - totalSoldTonnes;
-        const avgBuyPrice = totalPurchasedTonnes > 0 ? totalPurchaseValue / totalPurchasedTonnes : 0;
-        const avgSellPrice = totalSoldTonnes > 0 ? totalSoldValue / totalSoldTonnes : 0;
+        // Parduotos dalies savikaina (COGS)
+        const costOfGoodsSold = data.totalSoldTonnes * avgBuyPrice;
+        const cogsFixedTonnes = data.totalSoldTonnes * fixedRatio;
+        const cogsUnfixedTonnes = data.totalSoldTonnes * (1 - fixedRatio);
+        const cogsFixedPrice = avgBuyPrice - priceAdjustment;
+        const cogsFixedValue = cogsFixedTonnes * cogsFixedPrice;
+        const cogsUnfixedValue = costOfGoodsSold - cogsFixedValue;
+        const cogsUnfixedPrice = cogsUnfixedTonnes > 0 ? cogsUnfixedValue / cogsUnfixedTonnes : 0;
+
+        // Neparduoto kiekio savikaina
+        const openPositionCost = openPosition * avgBuyPrice;
+        const fixedOpenTonnes = openPosition * fixedRatio;
+        const unfixedOpenTonnes = openPosition * (1 - fixedRatio);
+        const fixedOpenPrice = avgBuyPrice - priceAdjustment;
+        const fixedOpenValue = fixedOpenTonnes * fixedOpenPrice;
+        const unfixedOpenValue = openPositionCost - fixedOpenValue;
+        const unfixedOpenPrice = unfixedOpenTonnes > 0 ? unfixedOpenValue / unfixedOpenTonnes : 0;
         
-        // Atnaujiname prognozės laukelius, jei pasikeitė filtras
-        if(isFilterChange) {
-            document.getElementById('sim-buy-price').value = round(avgBuyPrice);
-            document.getElementById('sim-sell-price').value = round(avgSellPrice);
-        }
+        // Parduoto kiekio pajamos
+        const fixedSoldTonnes = data.totalSoldTonnes * fixedRatio;
+        const unfixedSoldTonnes = data.totalSoldTonnes * (1 - fixedRatio);
+        const fixedSellPrice = avgSellPrice - priceAdjustment;
+        const fixedSoldValue = fixedSoldTonnes * fixedSellPrice;
+        const unfixedSoldValue = data.totalSoldValue - fixedSoldValue;
+        const unfixedSellPrice = unfixedSoldTonnes > 0 ? unfixedSoldValue / unfixedSoldTonnes : 0;
 
-        const simBuyPrice = parseFloat(document.getElementById('sim-buy-price').value) || 0;
-        const simSellPrice = parseFloat(document.getElementById('sim-sell-price').value) || 0;
+        // --- Detalizacijos atvaizdavimas ---
+        document.getElementById('cogs-fixed-price').textContent = formatCurrency(cogsFixedPrice);
+        document.getElementById('cogs-fixed-qty').textContent = formatTonnes(cogsFixedTonnes);
+        document.getElementById('cogs-fixed-total').textContent = formatCurrency(cogsFixedValue);
+        document.getElementById('cogs-unfixed-price').textContent = formatCurrency(cogsUnfixedPrice);
+        document.getElementById('cogs-unfixed-qty').textContent = formatTonnes(cogsUnfixedTonnes);
+        document.getElementById('cogs-unfixed-total').textContent = formatCurrency(cogsUnfixedValue);
+        document.getElementById('cogs-total-qty').textContent = formatTonnes(data.totalSoldTonnes);
+        document.getElementById('cogs-total-price').textContent = formatCurrency(avgBuyPrice);
+        document.getElementById('cogs-total-sum').textContent = formatCurrency(costOfGoodsSold);
 
-        // Skaičiuojame PROGNOZUOJAMĄ pelną
-        let projectedProfit;
-        if (openPosition >= 0) {
-            projectedProfit = (totalSoldValue + (openPosition * simSellPrice)) - totalPurchaseValue;
-        } else {
-             projectedProfit = totalSoldValue - (totalPurchaseValue + (Math.abs(openPosition) * simBuyPrice));
-        }
-        
-        // Skaičiuojame FAKTINĮ pelną
-        const actualProfit = totalSoldValue - totalPurchaseValue;
-
-
-        // --- Atvaizdavimas ---
-        // Prognozės blokas
-        const kpiProjectedProfitEl = document.getElementById('kpi-projected-profit');
-        kpiProjectedProfitEl.textContent = formatCurrency(projectedProfit);
-        kpiProjectedProfitEl.className = `kpi-value ${projectedProfit >= 0 ? 'text-green-600' : 'text-red-600'}`;
-        document.getElementById('kpi-open-position').textContent = formatTonnes(openPosition);
-
-        // Faktinės būsenos blokas
-        const kpiActualProfitEl = document.getElementById('kpi-actual-profit');
-        kpiActualProfitEl.textContent = formatCurrency(actualProfit);
-        kpiActualProfitEl.className = `kpi-value ${actualProfit >= 0 ? 'text-green-600' : 'text-red-600'}`;
-        document.getElementById('kpi-avg-buy').textContent = formatCurrency(avgBuyPrice);
-        document.getElementById('kpi-avg-sell').textContent = formatCurrency(avgSellPrice);
-
-        // Detalizacijos blokas
-        document.getElementById('details-buy-qty').textContent = formatTonnes(totalPurchasedTonnes);
-        document.getElementById('details-buy-price').textContent = formatCurrency(avgBuyPrice);
-        document.getElementById('details-buy-total').textContent = formatCurrency(totalPurchaseValue);
-
-        document.getElementById('details-sell-qty').textContent = formatTonnes(totalSoldTonnes);
-        document.getElementById('details-sell-price').textContent = formatCurrency(avgSellPrice);
-        document.getElementById('details-sell-total').textContent = formatCurrency(totalSoldValue);
-
+        document.getElementById('open-fixed-price').textContent = formatCurrency(fixedOpenPrice);
+        document.getElementById('open-fixed-qty').textContent = formatTonnes(fixedOpenTonnes);
+        document.getElementById('open-fixed-total').textContent = formatCurrency(fixedOpenValue);
+        document.getElementById('open-unfixed-price').textContent = formatCurrency(unfixedOpenPrice);
+        document.getElementById('open-unfixed-qty').textContent = formatTonnes(unfixedOpenTonnes);
+        document.getElementById('open-unfixed-total').textContent = formatCurrency(unfixedOpenValue);
         document.getElementById('details-open-qty').textContent = formatTonnes(openPosition);
+        document.getElementById('details-open-price').textContent = formatCurrency(avgBuyPrice);
+        document.getElementById('details-open-total').textContent = formatCurrency(openPositionCost);
+        
+        document.getElementById('sell-fixed-price').textContent = formatCurrency(fixedSellPrice);
+        document.getElementById('sell-fixed-qty').textContent = formatTonnes(fixedSoldTonnes);
+        document.getElementById('sell-fixed-total').textContent = formatCurrency(fixedSoldValue);
+        document.getElementById('sell-unfixed-price').textContent = formatCurrency(unfixedSellPrice);
+        document.getElementById('sell-unfixed-qty').textContent = formatTonnes(unfixedSoldTonnes);
+        document.getElementById('sell-unfixed-total').textContent = formatCurrency(unfixedSoldValue);
+        document.getElementById('details-sell-qty').textContent = formatTonnes(data.totalSoldTonnes);
+        document.getElementById('details-sell-price').textContent = formatCurrency(avgSellPrice);
+        document.getElementById('details-sell-total').textContent = formatCurrency(data.totalSoldValue);
+
+        // --- Apibendrinimo atvaizdavimas ---
+        const actualProfit = data.totalSoldValue - costOfGoodsSold;
+        document.getElementById('summary-sold-qty').textContent = formatTonnes(data.totalSoldTonnes);
+        document.getElementById('summary-actual-income').textContent = formatCurrency(data.totalSoldValue, true);
+        document.getElementById('summary-actual-cogs').textContent = formatCurrency(costOfGoodsSold, true);
+        document.getElementById('summary-actual-profit').textContent = formatCurrency(actualProfit);
+        document.getElementById('summary-actual-profit').classList.toggle('text-red-600', actualProfit < 0);
+        
+        const projectedSellPrice = parseFloat(document.getElementById('projected-sell-price').value.replace(',', '.')) || 0;
+        const projectedIncome = openPosition * projectedSellPrice;
+        document.getElementById('summary-open-qty').textContent = formatTonnes(openPosition);
+        document.getElementById('projected-income').textContent = formatCurrency(projectedIncome);
+
+        const totalProjectedProfit = actualProfit + projectedIncome - openPositionCost;
+        document.getElementById('total-summary-actual-profit').textContent = formatCurrency(actualProfit);
+        document.getElementById('total-summary-projected-income').textContent = formatCurrency(projectedIncome, true);
+        document.getElementById('total-summary-open-cogs').textContent = formatCurrency(openPositionCost, true);
+        document.getElementById('total-projected-profit').textContent = formatCurrency(totalProjectedProfit);
+        document.getElementById('total-projected-profit').classList.toggle('text-red-400', totalProjectedProfit < 0);
+        document.getElementById('total-projected-profit').classList.toggle('text-green-400', totalProjectedProfit >= 0);
     }
     
     // --- PRADINIS INICIALIZAVIMAS ---
     function initialize() {
         const grainSelect = document.getElementById('grain-select');
-        grainSelect.innerHTML = '<option value="viso">Viso</option>';
         for (const [key, value] of Object.entries(allData)) {
             const option = document.createElement('option');
             option.value = key;
@@ -291,22 +396,14 @@
         }
         grainSelect.value = state.selectedGrain;
 
-        // Nustatome datos ir laiko rodymą
         const now = new Date();
-        const formattedDate = now.toISOString().slice(0, 10);
-        const formattedTime = now.toTimeString().slice(0, 5);
-        document.getElementById('timestamp').textContent = `Duomenys atnaujinti: ${formattedDate} ${formattedTime}`;
+        document.getElementById('timestamp').textContent = `Duomenys atnaujinti: ${now.toISOString().slice(0, 10)} ${now.toTimeString().slice(0, 5)}`;
 
-        // Filtru pakeitimai iskviecia render su specialiu pozymiu
-        document.getElementById('grain-select').addEventListener('change', () => renderDashboard(true));
-        document.getElementById('period-select').addEventListener('change', () => renderDashboard(true));
+        document.getElementById('grain-select').addEventListener('change', renderDashboard);
+        document.getElementById('period-select').addEventListener('change', renderDashboard);
+        document.getElementById('projected-sell-price').addEventListener('input', renderDashboard);
         
-        // Kainu ivedimas iskviecia render be pozymio
-        document.getElementById('sim-sell-price').addEventListener('input', () => renderDashboard(false));
-        document.getElementById('sim-buy-price').addEventListener('input', () => renderDashboard(false));
-
-        // Pirmas atvaizdavimas uzkrovus puslapi
-        renderDashboard(true);
+        renderDashboard();
     }
 
     document.addEventListener('DOMContentLoaded', initialize);
