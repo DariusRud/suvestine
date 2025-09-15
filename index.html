@@ -3,745 +3,519 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mėginių Paėmimo Prototipas</title>
+    <title>Neuždarytų Sutarčių Suvestinė</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
+            background-color: #f3f4f6; 
+            color: #1f2f37; 
             font-family: 'Inter', sans-serif;
         }
-        .step-card {
-            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        .main-card {
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
         }
-        .hidden-step {
-            display: none;
-            opacity: 0;
-            transform: scale(0.95);
+        .form-input, .form-select {
+            background-color: #ffffff;
+            border: 1px solid #d1d5db;
+            color: #1f2f37;
         }
-        .visible-step {
-            display: block;
-            opacity: 1;
-            transform: scale(1);
+        .form-input:focus, .form-select:focus {
+            --tw-ring-color: #2563eb;
+            border-color: #2563eb;
         }
-        .autocomplete-items div, .dropdown-items div {
-            padding: 10px;
-            cursor: pointer;
-            background-color: #fff;
-            border-bottom: 1px solid #ddd;
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #374151;
         }
-        .autocomplete-items div:hover, .dropdown-items div:hover {
-            background-color: #e9e9e9;
+        .summary-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1rem;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e5e7eb;
         }
-        .autocomplete-active {
-            background-color: DodgerBlue !important;
-            color: #ffffff;
+        .summary-row:last-child {
+            border-bottom: none;
         }
-        .barcode {
-            font-family: 'Libre Barcode 39', cursive;
-            font-size: 48px;
-            line-height: 1;
+        .summary-label {
+            color: #4b5563;
+        }
+        .summary-value {
+            font-weight: 600;
+            font-family: 'mono', monospace;
+            text-align: right;
+        }
+        .summary-total {
+            font-weight: 700;
+            font-size: 1.125rem;
+            border-top: 2px solid #d1d5db;
+            margin-top: 0.75rem;
         }
     </style>
-     <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body class="p-4 md:p-8">
 
-    <div class="w-full max-w-5xl mx-auto p-4">
-        
-        <!-- Progress Bar -->
-        <div class="px-4 sm:px-0">
-             <div class="flex items-center justify-center mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 256 256" class="text-blue-600 mr-3"><path fill="currentColor" d="M216 72h-12.82A63.95 63.95 0 0 0 89.67 48.27L72.24 35.84A8 8 0 0 0 60.27 32H40a8 8 0 0 0 0 16h17.73l17.43 12.43A64.12 64.12 0 0 0 80 128a63.38 63.38 0 0 0 4.28 22.88a32 32 0 1 0 15.44 15.44A64 64 0 0 0 216 136V80a8 8 0 0 0-8-8M56 200a16 16 0 1 1 16 16a16 16 0 0 1-16-16m152-72h-72a56 56 0 0 1-52.2-35.34A56.24 56.24 0 0 1 136 80h72Z"/></svg>
-                <h1 class="text-2xl font-bold text-gray-800">Mėginių Siuntimo Procesas</h1>
-            </div>
-            <div class="relative w-full bg-gray-200 rounded-full h-2.5 mb-6">
-                <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%; transition: width 0.3s ease-in-out;"></div>
-            </div>
-        </div>
+    <div class="max-w-3xl mx-auto">
+        <!-- Antraštė -->
+        <header class="mb-8 text-center">
+            <div id="timestamp" class="text-sm text-gray-500 font-semibold mb-2"></div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Neuždarytų Pirkimo ir Pardavimo sutarčių SUVESTINĖ <br class="md:hidden"><span class="font-normal text-2xl">(Pelningumo prognozė)</span></h1>
+        </header>
 
-        <!-- Step 1: Scenario Selection -->
-        <div id="step-1" class="step-card bg-white p-8 rounded-xl shadow-lg visible-step">
-            <h2 class="text-xl font-semibold text-gray-700 mb-1">1. Scenarijaus Pasirinkimas</h2>
-            <p class="text-gray-500 mb-6">Pasirinkite mėginio siuntimo scenarijų.</p>
-            <div id="scenarioOptions" class="space-y-3">
-                <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-500 transition-all">
-                    <input type="radio" name="scenario" value="farm-vm" class="h-5 w-5 text-blue-600 border-gray-300 focus:ring-blue-500">
-                    <span class="ml-4 text-gray-800 font-medium">Ūkis -> Viking Malt (VM)</span>
-                </label>
-                <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-500 transition-all">
-                    <input type="radio" name="scenario" value="elevator-vm" class="h-5 w-5 text-blue-600 border-gray-300 focus:ring-blue-500">
-                    <span class="ml-4 text-gray-800 font-medium">Elevatorius -> Viking Malt (VM)</span>
-                </label>
-                <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-500 transition-all">
-                    <input type="radio" name="scenario" value="elevator-biliunai" class="h-5 w-5 text-blue-600 border-gray-300 focus:ring-blue-500">
-                    <span class="ml-4 text-gray-800 font-medium">Elevatorius -> BILIŪNAI Elevatorius</span>
-                </label>
-                 <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-500 transition-all">
-                    <input type="radio" name="scenario" value="elevator-office" class="h-5 w-5 text-blue-600 border-gray-300 focus:ring-blue-500">
-                    <span class="ml-4 text-gray-800 font-medium">Elevatorius -> Ofisas</span>
-                </label>
-            </div>
-            <div class="mt-8 text-right">
-                <button id="btn-step1-next" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>Toliau</button>
-            </div>
-        </div>
-
-        <!-- Step 2: Data Input -->
-        <div id="step-2" class="step-card bg-white p-8 rounded-xl shadow-lg hidden-step">
-            <div class="mb-4">
-                <span class="text-red-500 font-semibold">Scenarijus:</span>
-                <span class="text-gray-700 font-medium ml-2 scenario-display-text"></span>
-            </div>
-            <h2 class="text-xl font-semibold text-gray-700 mb-1">2. Duomenų įvedimas</h2>
-            <p class="text-gray-500 mb-6">Įveskite siuntėjo informaciją ir pasirinkite sutarties priedą.</p>
-            <div class="space-y-6">
-                <div class="relative">
-                    <label for="supplier" class="block text-sm font-medium text-gray-700 mb-1">Iš kur siunčiama (Tiekėjas)</label>
-                    <input type="text" id="supplier" name="supplier" autocomplete="off" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Pradėkite vesti ūkio pavadinimą...">
-                    <div id="autocomplete-list" class="absolute z-20 w-full bg-white border border-gray-300 rounded-b-md shadow-lg hidden autocomplete-items"></div>
-                    <div id="supplier-address" class="mt-2 text-sm text-gray-600 p-3 bg-gray-50 rounded-md border border-gray-200 hidden"></div>
+        <!-- Filtrai -->
+        <div class="mb-8 p-6 main-card rounded-xl">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="grain-select" class="block text-sm font-medium text-gray-700 mb-2">Kultūra</label>
+                    <select id="grain-select" class="form-select w-full rounded-md shadow-sm"></select>
                 </div>
-                <!-- Annex dropdown - initially hidden -->
-                <div id="annex-container" class="hidden">
-                    <label for="annex-search" class="block text-sm font-medium text-gray-700">Priedo numeris</label>
-                    <div class="relative mt-1">
-                        <input type="text" id="annex-search" placeholder="Pasirinkite arba ieškokite..." autocomplete="off" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                        <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                             <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path fill-rule="evenodd" d="M10 3a.75.75 0 01.53.22l3.5 3.5a.75.75 0 01-1.06 1.06L10 4.81 6.53 8.28a.75.75 0 01-1.06-1.06l3.5-3.5A.75.75 0 0110 3zm-3.72 9.28a.75.75 0 011.06 0L10 15.19l2.47-2.47a.75.75 0 111.06 1.06l-3.5 3.5a.75.75 0 01-1.06 0l-3.5-3.5a.75.75 0 010-1.06z" clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                        <div id="annex-dropdown" class="absolute hidden z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto dropdown-items">
-                            <!-- Annex items will be populated by JS -->
-                        </div>
-                    </div>
-                    <div id="annex-details" class="mt-2 text-sm text-gray-600 p-3 bg-gray-50 rounded-md border border-gray-200 hidden"></div>
+                <div>
+                    <label for="period-select" class="block text-sm font-medium text-gray-700 mb-2">Laikotarpis</label>
+                    <select id="period-select" class="form-select w-full rounded-md shadow-sm">
+                        <option value="visas">Visas laikotarpis</option>
+                        <option value="iki">Iki Naujų Metų</option>
+                        <option value="po">Po Naujų Metų</option>
+                    </select>
                 </div>
-            </div>
-            <div class="mt-8 flex justify-between">
-                <button class="btn-back bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-lg hover:bg-gray-300">Atgal</button>
-                <button id="btn-step2-next" class="btn-next bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400" disabled>Toliau</button>
-            </div>
-        </div>
-
-        <!-- Step 3: Sample Label -->
-        <div id="step-3" class="step-card bg-white p-8 rounded-xl shadow-lg hidden-step">
-            <div class="mb-4">
-                <span class="text-red-500 font-semibold">Scenarijus:</span>
-                <span class="text-gray-700 font-medium ml-2 scenario-display-text"></span>
-            </div>
-            <h2 class="text-xl font-semibold text-gray-700 mb-1">3. Lipdukas Mėginiui</h2>
-            <p class="text-gray-500 mb-6">Patikrinkite sugeneruotą lipduką ir įveskite kiekį.</p>
-            
-            <div class="mb-6">
-                <label for="quantity-input" class="block text-sm font-medium text-gray-700 font-bold">Kiekis:</label>
-                <input type="text" id="quantity-input" class="mt-1 block w-full max-w-xs px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="pvz., 150t">
-            </div>
-
-            <div class="space-y-6">
-                <!-- Sample Label -->
-                <div class="border-2 border-dashed rounded-lg p-4 bg-gray-50">
-                    <h3 class="font-bold text-center text-gray-800 mb-2">Mėginio lipdukas</h3>
-                    <div class="grid grid-cols-2 gap-0 border bg-white shadow-sm p-2">
-                        <!-- Left Label -->
-                        <div class="p-2 border-r">
-                            <div class="text-left mb-2 pb-2">
-                                <p class="font-bold text-sm">BALTIJOS JAVAI</p>
-                                <p class="text-xs text-gray-600">Siuntėjas: UAB "Baltijos javai"</p>
-                                <p class="text-xs text-gray-600">Svirbygalos g. 19, Lithuania</p>
-                            </div>
-                            <div class="space-y-1 text-xs">
-                                <p><span class="font-semibold">Pavyzdžio Nr:</span> <span class="label-sample-nr"></span></p>
-                                <p><span class="font-semibold">Paėmimo data:</span> <span class="label-date"></span></p>
-                                <p><span class="font-semibold">Veislė:</span> <span class="label-variety">Laureate</span></p>
-                                <p><span class="font-semibold">Paėmimo vieta:</span> <span class="label-location"></span></p>
-                                <p><span class="font-semibold">Kiekis:</span> <span class="label-quantity"></span></p>
-                            </div>
-                            <div class="mt-2 h-16 border-t border-gray-200"></div>
-                        </div>
-                        <!-- Right Label -->
-                        <div class="p-2">
-                             <div class="text-left mb-2 pb-2">
-                                <p class="font-bold text-sm">BALTIJOS JAVAI</p>
-                                <p class="text-xs text-gray-600">Siuntėjas: UAB "Baltijos javai"</p>
-                                <p class="text-xs text-gray-600">Svirbygalos g. 19, Lithuania</p>
-                            </div>
-                            <div class="space-y-1 text-xs">
-                                <p><span class="font-semibold">Pavyzdžio Nr:</span> <span class="label-sample-nr"></span></p>
-                                <p><span class="font-semibold">Paėmimo data:</span> <span class="label-date"></span></p>
-                                <p><span class="font-semibold">Veislė:</span> <span class="label-variety">Laureate</span></p>
-                                <p><span class="font-semibold">Paėmimo vieta:</span> <span class="label-location"></span></p>
-                                <p><span class="font-semibold">Kiekis:</span> <span class="label-quantity"></span></p>
-                            </div>
-                            <div class="mt-2 h-16 border-t border-gray-200"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="mt-8 flex justify-between">
-                <button class="btn-back bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-lg hover:bg-gray-300">Atgal</button>
-                <button class="btn-next bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700">Toliau</button>
             </div>
         </div>
         
-        <!-- Step 4: Omniva Order -->
-        <div id="step-4" class="step-card bg-white p-8 rounded-xl shadow-lg hidden-step">
-             <div class="mb-4">
-                <span class="text-red-500 font-semibold">Scenarijus:</span>
-                <span class="text-gray-700 font-medium ml-2 scenario-display-text"></span>
+        <!-- Rinkos Indeksai -->
+        <div class="mb-8 p-6 main-card rounded-xl">
+             <h2 class="section-title mb-4">Rinkos Indeksai</h2>
+             <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                 <div>
+                    <label for="market-date" class="block text-sm font-medium text-gray-700 mb-2">Data</label>
+                    <input type="date" id="market-date" class="form-input w-full rounded-md shadow-sm">
+                 </div>
+                 <div>
+                    <label for="matif-rapeseed" class="block text-sm font-medium text-gray-700 mb-2">Matif Rapsai (€/t)</label>
+                    <input type="text" inputmode="decimal" id="matif-rapeseed" class="form-input w-full rounded-md shadow-sm">
+                </div>
+                <div>
+                    <label for="matif-wheat" class="block text-sm font-medium text-gray-700 mb-2">Matif Kviečiai (€/t)</label>
+                    <input type="text" inputmode="decimal" id="matif-wheat" class="form-input w-full rounded-md shadow-sm">
+                </div>
+                 <div>
+                    <label for="fob-malt" class="block text-sm font-medium text-gray-700 mb-2">FOB Salyklas (€/t)</label>
+                    <input type="text" inputmode="decimal" id="fob-malt" class="form-input w-full rounded-md shadow-sm">
+                </div>
+             </div>
+        </div>
+        
+        <!-- Pirkimai -->
+        <div class="mb-8 p-6 main-card rounded-xl">
+            <h2 class="section-title mb-6">Pirkimai</h2>
+            <div class="grid grid-cols-1 gap-6">
+                <!-- Nupirktas Kiekis (Parduota dalis) -->
+                <div class="p-4 bg-gray-50 rounded-lg border">
+                    <h3 class="font-bold text-gray-800 mb-4">NUPIRKTAS KIEKIS, T. <span class="font-normal text-green-600">(PARDUOTA)</span></h3>
+                    <div class="space-y-3 text-sm">
+                         <div class="grid grid-cols-4 gap-4 text-xs text-gray-500 font-semibold">
+                            <span class="col-span-1">Tipas</span>
+                            <span class="text-right">Savikaina</span>
+                            <span class="text-right">Kiekis</span>
+                            <span class="text-right">Savikainos Suma</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-4 items-center">
+                            <span class="text-gray-600">Fiksuota kaina:</span>
+                            <span id="cogs-fixed-price" class="text-right font-mono">€0</span>
+                            <span id="cogs-fixed-qty" class="text-right font-mono">0 t</span>
+                            <span id="cogs-fixed-total" class="font-bold text-right font-mono">€0</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-4 items-center">
+                            <span class="text-gray-600">Nefiksuota kaina:</span>
+                            <span id="cogs-unfixed-price" class="text-right font-mono">€0</span>
+                            <span id="cogs-unfixed-qty" class="text-right font-mono">0 t</span>
+                            <span id="cogs-unfixed-total" class="font-bold text-right font-mono">€0</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-4 items-center pt-3 border-t mt-3">
+                            <span class="font-bold text-gray-700">Viso:</span>
+                            <span id="cogs-total-price" class="text-right font-mono font-bold text-base">€0</span>
+                            <span id="cogs-total-qty" class="text-right font-mono font-bold text-base">0 t</span>
+                            <span id="cogs-total-sum" class="text-right font-mono font-bold text-base">€0</span>
+                        </div>
+                    </div>
+                </div>
+                 <!-- Nupirktas Kiekis (Neparduota dalis) -->
+                <div class="p-4 bg-gray-50 rounded-lg border">
+                    <h3 class="font-bold text-gray-800 mb-4">NUPIRKTAS KIEKIS, T. <span class="font-normal text-red-600">(NEPARDUOTAS)</span></h3>
+                    <div class="space-y-3 text-sm">
+                         <div class="grid grid-cols-4 gap-4 text-xs text-gray-500 font-semibold">
+                            <span class="col-span-1">Tipas</span>
+                            <span class="text-right">Savikaina</span>
+                            <span class="text-right">Kiekis</span>
+                            <span class="text-right">Savikainos Suma</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-4 items-center">
+                            <span class="text-gray-600">Fiksuota kaina:</span>
+                            <span id="open-fixed-price" class="text-right font-mono">€0</span>
+                            <span id="open-fixed-qty" class="text-right font-mono">0 t</span>
+                            <span id="open-fixed-total" class="font-bold text-right font-mono">€0</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-4 items-center">
+                            <span class="text-gray-600">Nefiksuota kaina:</span>
+                            <span id="open-unfixed-price" class="text-right font-mono">€0</span>
+                            <span id="open-unfixed-qty" class="text-right font-mono">0 t</span>
+                            <span id="open-unfixed-total" class="font-bold text-right font-mono">€0</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-4 items-center pt-3 border-t mt-3">
+                            <span class="font-bold text-gray-700">Viso:</span>
+                            <span id="details-open-price" class="text-right font-mono font-bold text-base">€0</span>
+                            <span id="details-open-qty" class="text-right font-mono font-bold text-base">0 t</span>
+                            <span id="details-open-total" class="text-right font-mono font-bold text-base">€0</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <h2 class="text-xl font-semibold text-gray-700 mb-1">4. Omniva Užsakymas</h2>
-            <p class="text-gray-500 mb-6">Pasirinkite paėmimo datą ir sugeneruokite Omniva siuntos lipduką.</p>
+        </div>
+        
+        <!-- Pardavimai -->
+        <div class="mb-8 p-6 main-card rounded-xl">
+            <h2 class="section-title mb-6">Pardavimai</h2>
+            <div class="grid grid-cols-1 gap-6">
+                 <!-- Parduotas Kiekis -->
+                <div class="p-4 bg-gray-50 rounded-lg border">
+                    <h3 class="font-bold text-gray-800 mb-4">PARDUOTAS KIEKIS, T. <span class="font-normal text-red-600">(PASIRAŠYTOS SUTARTYS)</span></h3>
+                     <div class="space-y-3 text-sm">
+                         <div class="grid grid-cols-4 gap-4 text-xs text-gray-500 font-semibold">
+                            <span class="col-span-1">Tipas</span>
+                            <span class="text-right">Kaina</span>
+                            <span class="text-right">Kiekis</span>
+                            <span class="text-right">Suma</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-4 items-center">
+                            <span class="text-gray-600">Fiksuota kaina:</span>
+                            <span id="sell-fixed-price" class="text-right font-mono">€0</span>
+                            <span id="sell-fixed-qty" class="text-right font-mono">0 t</span>
+                            <span id="sell-fixed-total" class="font-bold text-right font-mono">€0</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-4 items-center">
+                            <span class="text-gray-600">Nefiksuota kaina:</span>
+                            <span id="sell-unfixed-price" class="text-right font-mono">€0</span>
+                            <span id="sell-unfixed-qty" class="text-right font-mono">0 t</span>
+                            <span id="sell-unfixed-total" class="font-bold text-right font-mono">€0</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-4 items-center pt-3 border-t mt-3">
+                            <span class="font-bold text-gray-700">Viso:</span>
+                            <span id="details-sell-price" class="text-right font-mono font-bold text-base">€0</span>
+                            <span id="details-sell-qty" class="text-right font-mono font-bold text-base">0 t</span>
+                            <span id="details-sell-total" class="text-right font-mono font-bold text-base">€0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Faktinė Būsena -->
+                <div class="p-4 bg-gray-50 rounded-lg border">
+                    <h3 class="font-semibold text-gray-700 mb-4">Faktinė Būsena (pagal jau įvykdytus sandorius)</h3>
+                    <div class="summary-row">
+                        <span class="summary-label">Kiekis (parduota)</span>
+                        <span id="summary-sold-qty" class="summary-value">0 t</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Pajamos (faktinės)</span>
+                        <span id="summary-actual-income" class="summary-value text-green-600">+ €0</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Savikaina (parduota)</span>
+                        <span id="summary-actual-cogs" class="summary-value text-red-600">- €0</span>
+                    </div>
+                    <div class="summary-row summary-total">
+                        <span class="summary-label">Pelnas / Nuostolis (faktinis)</span>
+                        <span id="summary-actual-profit" class="summary-value text-lg">€0</span>
+                    </div>
+                </div>
+
+                 <!-- Prognozė -->
+                <div class="p-4 bg-gray-50 rounded-lg border">
+                    <h3 class="font-semibold text-gray-700 mb-4">Prognozė (neparduotam kiekiui)</h3>
+                    <div class="summary-row">
+                        <span class="summary-label">Kiekis (neparduota)</span>
+                        <span id="summary-open-qty" class="summary-value">0 t</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 items-center pt-4">
+                         <div>
+                            <label for="projected-sell-price" class="block text-sm font-medium text-gray-700 mb-1">Jeigu parduotume po (€/t): <span class="text-red-600 font-normal">(įrašyti kainos sumą)</span></label>
+                            <input type="text" inputmode="decimal" id="projected-sell-price" class="form-input w-full rounded-md shadow-sm">
+                        </div>
+                        <div></div>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Prognozuojamos pajamos</span>
+                        <span id="projected-income" class="summary-value text-green-600">+ €0</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Savikaina (neparduota)</span>
+                        <span id="projected-cogs" class="summary-value text-red-600">- €0</span>
+                    </div>
+                    <div class="summary-row summary-total">
+                        <span class="summary-label">Pelnas / Nuostolis (prognozuojamas)</span>
+                        <span id="projected-profit" class="summary-value text-lg">€0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Apibendrinta Ataskaita -->
+        <div class="space-y-8">
+            <h2 class="section-title mb-4">Apibendrinimas</h2>
             
-             <!-- Omniva Label Section -->
-             <div class="border-2 border-dashed rounded-lg p-4 bg-gray-50">
-                <div class="text-center mb-4 border-b pb-4">
-                    <div class="mt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <div>
-                            <label for="pickup-date" class="block text-sm font-medium text-gray-700 text-left">Kada paimti:</label>
-                            <input type="date" id="pickup-date" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        <button id="generate-labels-btn" class="self-end sm:self-center bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 mt-2 sm:mt-0 whitespace-nowrap">Generuoti Omniva etiketę</button>
-                    </div>
-                    <div id="generation-success-msg" class="hidden mt-3 text-sm font-semibold text-green-600 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                        </svg>
-                        <span>Etiketė sėkmingai sugeneruota!</span>
-                    </div>
+            <!-- Bendra Prognozė -->
+            <div class="p-6 main-card rounded-xl bg-amber-900 text-white">
+                <h3 class="font-semibold text-amber-100 mb-4">1. Bendra Prognozė (Faktas + Prognozė)</h3>
+                <div class="summary-row border-amber-700">
+                    <span class="summary-label text-amber-200">Faktinis pelnas / nuostolis</span>
+                    <span id="total-summary-actual-profit" class="summary-value text-amber-100">€0</span>
                 </div>
+                <div class="summary-row border-amber-700">
+                    <span class="summary-label text-amber-200">Prognozuojamas pelnas / nuostolis (už likutį)</span>
+                    <span id="total-summary-projected-profit" class="summary-value text-amber-100">€0</span>
+                </div>
+                <div class="summary-row summary-total border-amber-600">
+                    <span class="summary-label text-lg text-amber-100">Bendras Prognozuojamas Pelnas / Nuostolis</span>
+                    <span id="total-projected-profit" class="summary-value text-2xl">€0</span>
+                </div>
+            </div>
 
-                <div id="omniva-sticker-preview" class="hidden">
-                    <h3 class="font-bold text-center text-gray-800 mb-2">Omniva lipdukas</h3>
-                    <div class="bg-white p-4 rounded-md shadow-sm border text-gray-800">
-                        <div class="flex justify-between items-start pb-2 border-b">
-                            <div>
-                                <img src="https://www.omniva.lt/img/omniva-logo.svg" alt="Omniva logo" class="h-6">
-                                <p class="text-xs mt-1">Siunta - Kurjeris</p>
-                            </div>
-                            <div class="text-right">
-                                <svg class="w-12 h-12" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><path fill="currentColor" d="M140 140h28v28h-28v-28Zm-56-56H56v28h28V84Zm0 56H56v28h28v-28Zm56-56h28v28h-28V84Zm56 0h28v28h-28V84Zm-56 56h28v28h-28v-28Zm56 0h28v28h-28v-28Zm-56 56h28v28h-28v-28Zm-28-28a12 12 0 1 1-12-12a12 12 0 0 1 12 12Zm112 0h28v28h-28v-28Zm-56 56h28v28h-28v-28Zm-56-56H56v28h28v-28Zm0-56H56v28h28V84Zm168 56h28v28h-28v-28ZM40 40a16 16 0 0 0-16 16v40H8a8 8 0 0 0 0 16h16v40H8a8 8 0 0 0 0 16h16v40a16 16 0 0 0 16 16h40v16a8 8 0 0 0 16 0v-16h40v16a8 8 0 0 0 16 0v-16h40v16a8 8 0 0 0 16 0v-16h40a16 16 0 0 0 16-16v-40h16a8 8 0 0 0 0-16h-16V96h16a8 8 0 0 0 0-16h-16V56a16 16 0 0 0-16-16H56A16 16 0 0 0 40 40Zm16 16h144v144H56V56Z"/></svg>
-                                <p class="text-sm font-mono mt-1" id="omniva-date"></p>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-6 gap-2 mt-2">
-                            <div class="col-span-1 text-xs font-bold transform -rotate-90 origin-center self-center text-center tracking-widest">SIUNTĖJAS</div>
-                            <div class="col-span-5 text-xs pl-2">
-                                <p class="font-bold">Baltijos Javai UAB</p>
-                                <p>Kauno m. Svirbygalos g. 19, LT-46280</p>
-                                <p>Kauno m. sav., Kauno apskr. Lietuva</p>
-                            </div>
-                        </div>
-                         <div class="grid grid-cols-6 gap-2 mt-2 pt-2 border-t">
-                            <div class="col-span-1 text-xs font-bold transform -rotate-90 origin-center self-center text-center tracking-widest">GAVĖJAS</div>
-                            <div class="col-span-5 text-xs pl-2">
-                                <p class="font-bold">UAB Viking Malt</p>
-                                <p>Dovydas</p>
-                                <p>Panevėžio m. Pramonės g. 2, LT-35289, Panevėžys</p>
-                                <p class="mt-1">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg>
-                                    <span>37069151153</span>
-                                </p>
-                            </div>
-                        </div>
-                        <div class="py-2 mt-2 border-y">
-                            <p class="text-xs font-semibold">Būtinai pasiskambinti prieš atvykstant</p>
-                        </div>
-                        <div class="mt-2 text-center">
-                            <div class="barcode">*CC780308494EE*</div>
-                            <p class="text-xs font-mono tracking-widest">CC780308494EE</p>
-                        </div>
-                    </div>
+            <!-- Vidutiniai Rodikliai -->
+            <div class="p-6 main-card rounded-xl">
+                <h3 class="font-semibold text-gray-700 mb-4">2. Prognozės Vidurkiai</h3>
+                <div class="summary-row">
+                    <span class="summary-label">Vidutinė pirkimo kaina (€/t)</span>
+                    <span id="summary-avg-buy-price" class="summary-value text-lg">€0,00</span>
+                </div>
+                 <div class="summary-row">
+                    <span class="summary-label">Vidutinė faktinių pardavimų kaina (€/t)</span>
+                    <span id="summary-avg-actual-sell-price" class="summary-value text-lg">€0,00</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label font-semibold">Vidutinis faktinis pelnas / nuostolis (€/t)</span>
+                    <span id="summary-actual-profit-per-ton" class="summary-value text-lg font-semibold">€0,00</span>
+                </div>
+                 <div class="summary-row">
+                    <span class="summary-label font-semibold">Vidutinis prognozuojamas pelnas / nuostolis (€/t)</span>
+                    <span id="summary-projected-profit-per-ton" class="summary-value text-lg font-semibold">€0,00</span>
+                </div>
+                <div class="summary-row summary-total">
+                    <span class="summary-label font-bold">Vidutinis bendras pelnas / nuostolis (€/t)</span>
+                    <span id="summary-total-profit-per-ton" class="summary-value text-xl font-bold">€0,00</span>
                 </div>
             </div>
-             <div class="mt-8 flex justify-between">
-                <button class="btn-back bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-lg hover:bg-gray-300">Atgal</button>
-                <button class="btn-next bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700">Toliau</button>
-            </div>
+
         </div>
 
-
-        <!-- Step 5: Email Sending -->
-        <div id="step-5" class="step-card bg-white p-8 rounded-xl shadow-lg hidden-step">
-            <div class="mb-4">
-                <span class="text-red-500 font-semibold">Scenarijus:</span>
-                <span class="text-gray-700 font-medium ml-2 scenario-display-text"></span>
-            </div>
-            <h2 class="text-xl font-semibold text-gray-700 mb-1">5. El. laiško siuntimas</h2>
-            <p class="text-gray-500 mb-6">Patikrinkite suformuotą el. laišką ūkiui ir prisegtus dokumentus.</p>
-            <div class="border rounded-lg overflow-hidden bg-white shadow-sm">
-                <div class="p-4 border-b bg-gray-50 space-y-2">
-                    <div>
-                        <label for="email-to-input" class="text-sm font-medium text-gray-500">Kam:</label>
-                        <input type="email" id="email-to-input" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-                    <div>
-                        <label for="email-subject-input" class="text-sm font-medium text-gray-500">Tema:</label>
-                        <input type="text" id="email-subject-input" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-                </div>
-                <div class="p-4">
-                    <label for="email-body-input" class="text-sm font-medium text-gray-500">Laiško tekstas:</label>
-                    <textarea id="email-body-input" rows="10" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
-                </div>
-
-                <div class="p-4 border-t bg-gray-50">
-                    <h4 class="text-sm font-semibold mb-2 text-gray-600">Prisegtukai (2):</h4>
-                    <div class="flex space-x-3">
-                        <div class="flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded-full">
-                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                            meginio_lipdukas.pdf
-                        </div>
-                        <div class="flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded-full">
-                             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                            omniva_siunta.pdf
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="mt-8 flex justify-between">
-                <button class="btn-back bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-lg hover:bg-gray-300">Atgal</button>
-                <button class="btn-next bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700">Siųsti</button>
-            </div>
-        </div>
-
-        <!-- Step 6: Confirmation -->
-        <div id="step-6" class="step-card bg-white p-8 rounded-xl shadow-lg hidden-step">
-            <div class="text-center">
-                 <div class="mb-4">
-                    <span class="text-red-500 font-semibold">Scenarijus:</span>
-                    <span class="text-gray-700 font-medium ml-2 scenario-display-text"></span>
-                </div>
-                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
-                    <svg class="h-10 w-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                </div>
-                <h2 class="text-2xl font-bold text-gray-800">Sėkmingai išsiųsta!</h2>
-                <p class="text-gray-500 mt-2 mb-6">Laiškas ir dokumentai buvo sėkmingai išsiųsti tiekėjui.</p>
-            </div>
-             <div class="mt-8">
-                <h3 class="text-lg font-semibold text-gray-700 mb-4">Anksčiau išsiųstų mėginių sąrašas</h3>
-                <div class="overflow-x-auto border rounded-lg">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vadybininkas</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paėmimo Data</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mėginio Nr.</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tiekėjas</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paėmimo Vieta</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Siunčiama į</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sutarties Priedas</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statusas</th>
-                            </tr>
-                        </thead>
-                        <tbody id="history-table-body" class="bg-white divide-y divide-gray-200">
-                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">Andrius</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">2025-09-10</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">BJ25 M229</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">Pauliaus Jurgeliūno ūkis</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">Kėdainių r. sav.</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">VM</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">SUT00627-P3</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Išsiųsta</span></td>
-                            </tr>
-                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">Andrius</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">2025-09-08</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">BJ25 M228</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">UAB „Drąsutaičiai“</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">Pakruojo r. sav.</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">BIL</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">SUT00588-P2</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Išsiųsta</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="mt-8 text-center">
-                <button id="btn-restart" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700">Pradėti iš naujo</button>
-            </div>
-        </div>
     </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    let currentStep = 1;
-    const totalSteps = 6;
-    let sampleCounter = 230; // Start counter for new samples
-    let currentSampleNumber = null;
-    let selectedScenario = null;
-    let selectedScenarioText = '';
-    
-    // Mock data for suppliers with associated annexes
-    const suppliers = [
-        {
-            name: 'Klauso ūkis, UAB',
-            address: 'Domeikų g. 8, Domeikių k., Žagarės sen., Joniškio r. sav., Šiaulių apskr., LT-84374',
-            email: 'info@klauso.ukis.lt',
-            location: 'Joniškio r. sav.',
-            annexes: [
-                { nr: 'SUT00595-P1', date: '2025-10-15', quantity: '150t', status: 'aktyvus' },
-                { nr: 'SUT00642-P1', date: '2025-11-01', quantity: '200t', status: 'aktyvus' },
-                { nr: 'SUT00642-P2', date: '2025-11-20', quantity: '50t', status: 'vykdomas' }
-            ]
-        },
-        {
-            name: 'Pauliaus Jurgeliūno ūkis',
-            address: 'Liepų g. 1, Kėdainiai, LT-57345',
-            email: 'info@jurgeliuno.ukis.lt',
-            location: 'Kėdainių r. sav.',
-            annexes: [
-                { nr: 'SUT00627-P3', date: '2025-09-30', quantity: '100t', status: 'aktyvus' }
-            ]
-        },
-        {
-            name: 'UAB „Drąsutaičiai“',
-            address: 'Parko g. 15, Drąsutaičiai, Pakruojo r. sav., LT-83451',
-            email: 'info@drasutaiciai.lt',
-            location: 'Pakruojo r. sav.',
-            annexes: [
-                { nr: 'SUT00588-P2', date: '2025-10-01', quantity: '250t', status: 'aktyvus' },
-                { nr: 'SUT00588-P4', date: '2025-10-25', quantity: '175t', status: 'pasyvus' }
-            ]
-        },
-        {
-            name: 'Vilkėno ūkis PŪB',
-            address: 'Vilkėno g. 3, Šilutės r. sav., LT-99145',
-            email: 'info@vilkeno.ukis.lt',
-            location: 'Šilutės r. sav.',
-            annexes: [
-                { nr: 'SUT00711-P1', date: '2026-01-15', quantity: '120t', status: 'aktyvus' }
-            ]
-        },
-        {
-            name: 'Nemuno ūkis PŪB',
-            address: 'Nemuno g. 101, Jurbarko r. sav., LT-74123',
-            email: 'info@nemuno.ukis.lt',
-            location: 'Jurbarko r. sav.',
-            annexes: [
-                { nr: 'SUT00725-P1', date: '2025-12-05', quantity: '300t', status: 'aktyvus' },
-                { nr: 'SUT00725-P2', date: '2025-12-20', quantity: '150t', status: 'aktyvus' }
-            ]
-        }
-    ];
-    let selectedSupplier = null;
-    let selectedAnnex = null;
-
-    // --- DOM Elements ---
-    const steps = document.querySelectorAll('.step-card');
-    const progressBar = document.getElementById('progressBar');
-    const nextButtons = document.querySelectorAll('.btn-next');
-    const backButtons = document.querySelectorAll('.btn-back');
-    const step1NextBtn = document.getElementById('btn-step1-next');
-    const step2NextBtn = document.getElementById('btn-step2-next');
-    const scenarioRadios = document.querySelectorAll('input[name="scenario"]');
-    const supplierInput = document.getElementById('supplier');
-    const supplierAddressDiv = document.getElementById('supplier-address');
-    const autocompleteList = document.getElementById('autocomplete-list');
-    const annexContainer = document.getElementById('annex-container');
-    const annexSearchInput = document.getElementById('annex-search');
-    const annexDropdown = document.getElementById('annex-dropdown');
-    const annexDetailsDiv = document.getElementById('annex-details');
-    const pickupDateInput = document.getElementById('pickup-date');
-    const generateLabelsBtn = document.getElementById('generate-labels-btn');
-    const omnivaStickerPreview = document.getElementById('omniva-sticker-preview');
-    const quantityInput = document.getElementById('quantity-input');
-    const generationSuccessMsg = document.getElementById('generation-success-msg');
-
-    // --- Functions ---
-    const updateProgressBar = () => {
-        const progress = ((currentStep - 1) / (totalSteps - 1)) * 100;
-        progressBar.style.width = `${progress}%`;
-    };
-
-    const showStep = (stepNumber) => {
-        steps.forEach((step, index) => {
-            step.classList.toggle('visible-step', index + 1 === stepNumber);
-            step.classList.toggle('hidden-step', index + 1 !== stepNumber);
-        });
-         if (stepNumber === 4) { // Reset Omniva sticker when entering its step
-            omnivaStickerPreview.classList.add('hidden');
-            generationSuccessMsg.classList.add('hidden');
-            pickupDateInput.value = '';
-        }
-        currentStep = stepNumber;
-        updateProgressBar();
-    };
-    
-    const updateUIData = () => {
-        if (!selectedSupplier || !selectedAnnex) return;
-        
-        // This function is now primarily for setting up Step 3
-        if (currentStep === 2) {
-             currentSampleNumber = 'BJ25 M' + sampleCounter++;
-             const selectedAnnexData = selectedSupplier.annexes.find(a => a.nr === selectedAnnex);
-             const initialQuantity = selectedAnnexData ? selectedAnnexData.quantity : 'N/A';
-             quantityInput.value = initialQuantity;
-             document.querySelectorAll('.label-quantity').forEach(el => el.textContent = initialQuantity);
-        
-            const today = new Date();
-            const deliveryDate = new Date();
-            deliveryDate.setDate(today.getDate() + 3);
-            const formattedDateLT = deliveryDate.toLocaleDateString('lt-LT');
-            
-            document.querySelectorAll('.label-sample-nr').forEach(el => el.textContent = currentSampleNumber);
-            document.querySelectorAll('.label-date').forEach(el => el.textContent = formattedDateLT);
-            document.querySelectorAll('.label-location').forEach(el => el.textContent = selectedSupplier.location);
-        }
-    };
-    
-    const validateStep2 = () => {
-        step2NextBtn.disabled = !(selectedSupplier && selectedAnnex && supplierInput.value === selectedSupplier.name);
-    };
-
-    const resetAnnex = () => {
-        annexContainer.classList.add('hidden');
-        annexDetailsDiv.classList.add('hidden');
-        annexSearchInput.value = '';
-        selectedAnnex = null;
-        validateStep2();
-    };
-    
-    // --- Event Listeners ---
-    nextButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            if (currentStep < totalSteps) {
-                if (currentStep === 2) {
-                    updateUIData();
-                } else if (currentStep === 4) { // When leaving Omniva step, update email info
-                    const emailToInput = document.getElementById('email-to-input');
-                    const emailSubjectInput = document.getElementById('email-subject-input');
-                    const emailBodyInput = document.getElementById('email-body-input');
-                    
-                    emailToInput.value = selectedSupplier.email;
-                    emailSubjectInput.value = `Mėginio paėmimas pagal sutartį ${selectedAnnex}`;
-
-                    let formattedDateLT;
-                    if (pickupDateInput.value) {
-                         const dateObj = new Date(pickupDateInput.value);
-                         const userTimezoneOffset = dateObj.getTimezoneOffset() * 60000;
-                         const adjustedDate = new Date(dateObj.getTime() + userTimezoneOffset);
-                         formattedDateLT = adjustedDate.toLocaleDateString('lt-LT');
-                    } else {
-                         const deliveryDate = new Date();
-                         deliveryDate.setDate(new Date().getDate() + 3);
-                         formattedDateLT = deliveryDate.toLocaleDateString('lt-LT');
-                    }
-                    
-                    const bodyText = `Sveiki,
-
-Kurjeris atvyks ${formattedDateLT} | 12:00-13:30 | ${selectedSupplier.address}.
-
-Primename, kad adreso kortelės lipdukas klijuojamas ant siuntos kurjeriui.
-
-Lipdukas mėginiui yra klijuojamas ant miežių mėginio pavyzdžio (2 kg). Svarbu: jeigu mėginys bus be lipduko, kuris yra sukurtas jus identifikuoti, tyrimas laboratorijoje nebus atliekamas.
-
-Pagarbiai/Kind regards,
-Renata Bernotienė
-Logistikos administratorė
-UAB "Baltijos javai"`;
-    
-                    emailBodyInput.value = bodyText;
-
-                } else if (currentStep === 5) { // After clicking "Send"
-                    const historyTable = document.getElementById('history-table-body');
-                    const newRow = historyTable.insertRow(0);
-                    const today = new Date().toISOString().split('T')[0];
-                    const getSentToValue = (scenario) => {
-                        switch(scenario) {
-                            case 'farm-vm':
-                            case 'elevator-vm':
-                                return 'VM';
-                            case 'elevator-biliunai':
-                                return 'BIL';
-                            case 'elevator-office':
-                                return 'Ofisas';
-                            default:
-                                return 'N/A';
-                        }
-                    };
-                    const sentTo = getSentToValue(selectedScenario);
-                    newRow.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">Andrius</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${pickupDateInput.value || today}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">${currentSampleNumber}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${selectedSupplier.name}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${selectedSupplier.location}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${sentTo}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${selectedAnnex}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Išsiųsta</span></td>
-                    `;
-                }
-                showStep(currentStep + 1);
+    // --- DUOMENŲ BAZĖS SIMULIACIJA ---
+    const allData = {
+        'salykliniai_mieziai': {
+            name: 'Salykliniai miežiai',
+            periods: {
+                'iki': { totalPurchasedTonnes: 26000, totalPurchaseValue: 5148000, totalSoldTonnes: 19500, totalSoldValue: 4270500 },
+                'po': { totalPurchasedTonnes: 24900, totalPurchaseValue: 4950560, totalSoldTonnes: 19400, totalSoldValue: 4266984 }
             }
-        });
-    });
+        },
+        'mieziai': { name: 'Miežiai', periods: { 'iki': { totalPurchasedTonnes: 30000, totalPurchaseValue: 5700000, totalSoldTonnes: 25000, totalSoldValue: 5000000 }, 'po': { totalPurchasedTonnes: 20000, totalPurchaseValue: 3800000, totalSoldTonnes: 18000, totalSoldValue: 3600000 }}},
+        'kvieciai': { name: 'Kviečiai', periods: { 'iki': { totalPurchasedTonnes: 40000, totalPurchaseValue: 7600000, totalSoldTonnes: 35000, totalSoldValue: 7350000 }, 'po': { totalPurchasedTonnes: 45000, totalPurchaseValue: 8550000, totalSoldTonnes: 37000, totalSoldValue: 7770000 }}},
+        'salyklas': { name: 'Salyklas', periods: { 'iki': { totalPurchasedTonnes: 5000, totalPurchaseValue: 2250000, totalSoldTonnes: 4000, totalSoldValue: 1920000 }, 'po': { totalPurchasedTonnes: 6000, totalPurchaseValue: 2700000, totalSoldTonnes: 5500, totalSoldValue: 2640000 }}},
+        'rapsai': { name: 'Rapsai', periods: { 'iki': { totalPurchasedTonnes: 15000, totalPurchaseValue: 6750000, totalSoldTonnes: 18000, totalSoldValue: 8460000 }, 'po': { totalPurchasedTonnes: 10000, totalPurchaseValue: 4500000, totalSoldTonnes: 8000, totalSoldValue: 3760000 }}}
+    };
 
-    backButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            if (currentStep > 1) showStep(currentStep - 1);
-        });
-    });
-
-    scenarioRadios.forEach(radio => {
-        radio.addEventListener('change', () => { 
-            step1NextBtn.disabled = false;
-            const checkedRadio = document.querySelector('input[name="scenario"]:checked');
-            selectedScenario = checkedRadio.value;
-            selectedScenarioText = checkedRadio.nextElementSibling.textContent.trim();
-        });
-    });
-
-    step1NextBtn.addEventListener('click', () => {
-        document.querySelectorAll('.scenario-display-text').forEach(el => {
-            el.textContent = selectedScenarioText;
-        });
-        showStep(2);
-    });
+    // --- APLIKACIJOS BŪSENA (STATE) ---
+    const state = { selectedGrain: 'salykliniai_mieziai', selectedPeriod: 'visas' };
     
-    document.getElementById('btn-restart').addEventListener('click', () => {
-        selectedSupplier = null;
-        currentSampleNumber = null;
-        supplierInput.value = '';
-        supplierAddressDiv.classList.add('hidden');
-        autocompleteList.classList.add('hidden');
-        resetAnnex();
-        scenarioRadios.forEach(r => r.checked = false);
-        step1NextBtn.disabled = true;
-        selectedScenario = null;
-        selectedScenarioText = '';
-        document.querySelectorAll('.scenario-display-text').forEach(el => {
-            el.textContent = '';
-        });
-        omnivaStickerPreview.classList.add('hidden');
-        pickupDateInput.value = '';
-        quantityInput.value = '';
-        generationSuccessMsg.classList.add('hidden');
-        showStep(1);
-    });
+    // --- PAGALBINĖS FUNKCIJOS ---
+     const formatCurrency = (val, sign) => {
+        const prefix = sign && val > 0 ? '+' : (sign && val < 0 ? '-' : '');
+        const formattedVal = new Intl.NumberFormat('lt-LT', { style: 'currency', currency: 'EUR' }).format(Math.abs(val));
+        return `${prefix} ${formattedVal}`;
+    };
+    const formatCurrencyPerTon = (val) => {
+        return new Intl.NumberFormat('lt-LT', { 
+            style: 'currency', 
+            currency: 'EUR',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(val);
+    };
+    const formatTonnes = (val) => `${new Intl.NumberFormat('lt-LT').format(Math.round(val))} t`;
 
-    quantityInput.addEventListener('input', () => {
-        const quantityValue = quantityInput.value.trim() ? quantityInput.value : '0t';
-        document.querySelectorAll('.label-quantity').forEach(el => el.textContent = quantityValue);
-    });
-    
-    generateLabelsBtn.addEventListener('click', () => {
-        const selectedDate = pickupDateInput.value;
-        if (!selectedDate) {
-            pickupDateInput.focus();
-            return;
-        }
-
-        const dateObj = new Date(selectedDate);
-        const userTimezoneOffset = dateObj.getTimezoneOffset() * 60000;
-        const adjustedDate = new Date(dateObj.getTime() + userTimezoneOffset);
-
-        const formattedDateLT = adjustedDate.toLocaleDateString('lt-LT');
-        const formattedDateISO = adjustedDate.toISOString().split('T')[0];
-
-        document.querySelectorAll('.label-date').forEach(el => el.textContent = formattedDateLT);
-        document.getElementById('omniva-date').textContent = formattedDateISO;
-
-        omnivaStickerPreview.classList.remove('hidden');
-        generationSuccessMsg.classList.remove('hidden');
-        setTimeout(() => {
-            generationSuccessMsg.classList.add('hidden');
-        }, 3000);
-    });
-
-
-    // --- Autocomplete & Dropdown Logic ---
-    supplierInput.addEventListener('input', function() {
-        const val = this.value;
-        closeAllLists();
-        resetAnnex();
-        selectedSupplier = null;
-        validateStep2();
-
-        if (!val) return false;
-        
-        autocompleteList.innerHTML = '';
-        autocompleteList.classList.remove('hidden');
-
-        suppliers.forEach(supplier => {
-            if (supplier.name.toUpperCase().includes(val.toUpperCase())) {
-                const item = document.createElement('div');
-                item.innerHTML = `<strong>${supplier.name.substr(0, val.length)}</strong>${supplier.name.substr(val.length)}`;
-                item.addEventListener('click', function() {
-                    supplierInput.value = supplier.name;
-                    selectedSupplier = supplier;
-                    supplierAddressDiv.innerHTML = `<strong>Adresas:</strong> ${supplier.address}`;
-                    supplierAddressDiv.classList.remove('hidden');
-                    closeAllLists();
-                    
-                    annexContainer.classList.remove('hidden');
-                    populateAnnexDropdown(supplier.annexes);
-                });
-                autocompleteList.appendChild(item);
-            }
-        });
-    });
-    
-    function populateAnnexDropdown(annexes) {
-        annexDropdown.innerHTML = '';
-        annexes.forEach(annex => {
-            const item = document.createElement('div');
-            item.classList.add('flex', 'justify-between', 'items-center', 'w-full', 'p-2', 'text-sm', 'cursor-pointer', 'border-b', 'hover:bg-gray-100');
-            item.innerHTML = `
-                <span class="font-semibold text-red-500 w-1/4">${annex.nr}</span>
-                <span class="text-gray-600 w-1/4"><strong class="font-medium">Priedo data:</strong> ${annex.date}</span>
-                <span class="text-gray-600 w-1/4"><strong class="font-medium">Kiekis:</strong> ${annex.quantity}</span>
-                <span class="w-1/4 text-right"><strong class="font-medium">Statusas:</strong> <span class="font-semibold ${annex.status === 'aktyvus' ? 'text-green-600' : 'text-yellow-600'}">${annex.status}</span></span>
-            `;
-            item.addEventListener('click', function() {
-                annexSearchInput.value = annex.nr;
-                selectedAnnex = annex.nr;
-                
-                const selectedAnnexData = selectedSupplier.annexes.find(a => a.nr === selectedAnnex);
-                if (selectedAnnexData) {
-                    annexDetailsDiv.innerHTML = `
-                        <strong>Priedo data:</strong> ${selectedAnnexData.date} | 
-                        <strong>Kiekis:</strong> ${selectedAnnexData.quantity} | 
-                        <strong>Statusas:</strong> <span class="font-semibold ${selectedAnnexData.status === 'aktyvus' ? 'text-green-600' : 'text-yellow-600'}">${selectedAnnexData.status}</span>
-                    `;
-                    annexDetailsDiv.classList.remove('hidden');
-                    quantityInput.value = selectedAnnexData.quantity;
-                    document.querySelectorAll('.label-quantity').forEach(el => el.textContent = selectedAnnexData.quantity);
+    function getFilteredData() {
+        const grainKeys = [state.selectedGrain]; 
+        const periodKeys = state.selectedPeriod === 'visas' ? ['iki', 'po'] : [state.selectedPeriod];
+        const result = { totalPurchasedTonnes: 0, totalPurchaseValue: 0, totalSoldTonnes: 0, totalSoldValue: 0 };
+        for (const grainKey of grainKeys) {
+            for (const periodKey of periodKeys) {
+                const data = allData[grainKey].periods[periodKey];
+                if (data) {
+                    result.totalPurchasedTonnes += data.totalPurchasedTonnes;
+                    result.totalPurchaseValue += data.totalPurchaseValue;
+                    result.totalSoldTonnes += data.totalSoldTonnes;
+                    result.totalSoldValue += data.totalSoldValue;
                 }
-
-                annexDropdown.classList.add('hidden');
-                validateStep2();
-            });
-            annexDropdown.appendChild(item);
-        });
+            }
+        }
+        return result;
     }
 
-    annexSearchInput.addEventListener('input', function() {
-        const filter = this.value.toUpperCase();
-        const items = annexDropdown.getElementsByTagName('div');
-        for (let i = 0; i < items.length; i++) {
-            const txtValue = items[i].textContent || items[i].innerText;
-            items[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
-        }
-    });
+    // --- RENDERINIMO FUNKCIJOS ---
+    function renderDashboard() {
+        state.selectedGrain = document.getElementById('grain-select').value;
+        state.selectedPeriod = document.getElementById('period-select').value;
+        
+        const data = getFilteredData();
+        const openPosition = data.totalPurchasedTonnes - data.totalSoldTonnes;
+        const avgBuyPrice = data.totalPurchasedTonnes > 0 ? data.totalPurchaseValue / data.totalPurchasedTonnes : 0;
+        const avgSellPrice = data.totalSoldTonnes > 0 ? data.totalSoldValue / data.totalSoldTonnes : 0;
 
-    annexSearchInput.addEventListener('focus', () => annexDropdown.classList.remove('hidden'));
+        const fixedRatio = 0.4;
+        const priceAdjustment = 2;
+        
+        const costOfGoodsSold = data.totalSoldTonnes * avgBuyPrice;
+        const cogsFixedTonnes = data.totalSoldTonnes * fixedRatio;
+        const cogsUnfixedTonnes = data.totalSoldTonnes * (1 - fixedRatio);
+        const cogsFixedPrice = avgBuyPrice - priceAdjustment;
+        const cogsFixedValue = cogsFixedTonnes * cogsFixedPrice;
+        const cogsUnfixedValue = costOfGoodsSold - cogsFixedValue;
+        const cogsUnfixedPrice = cogsUnfixedTonnes > 0 ? cogsUnfixedValue / cogsUnfixedTonnes : 0;
 
-    function closeAllLists(elmnt) {
-        autocompleteList.classList.add('hidden');
-        if (elmnt !== annexSearchInput) {
-            annexDropdown.classList.add('hidden');
+        const openPositionCost = openPosition * avgBuyPrice;
+        const fixedOpenTonnes = openPosition * fixedRatio;
+        const unfixedOpenTonnes = openPosition * (1 - fixedRatio);
+        const fixedOpenPrice = avgBuyPrice - priceAdjustment;
+        const fixedOpenValue = fixedOpenTonnes * fixedOpenPrice;
+        const unfixedOpenValue = openPositionCost - fixedOpenValue;
+        const unfixedOpenPrice = unfixedOpenTonnes > 0 ? unfixedOpenValue / unfixedOpenTonnes : 0;
+        
+        const fixedSoldTonnes = data.totalSoldTonnes * fixedRatio;
+        const unfixedSoldTonnes = data.totalSoldTonnes * (1 - fixedRatio);
+        const fixedSellPrice = avgSellPrice - priceAdjustment;
+        const fixedSoldValue = fixedSoldTonnes * fixedSellPrice;
+        const unfixedSoldValue = data.totalSoldValue - fixedSoldValue;
+        const unfixedSellPrice = unfixedSoldTonnes > 0 ? unfixedSoldValue / unfixedSoldTonnes : 0;
+
+        document.getElementById('cogs-fixed-price').textContent = formatCurrency(cogsFixedPrice);
+        document.getElementById('cogs-fixed-qty').textContent = formatTonnes(cogsFixedTonnes);
+        document.getElementById('cogs-fixed-total').textContent = formatCurrency(cogsFixedValue);
+        document.getElementById('cogs-unfixed-price').textContent = formatCurrency(cogsUnfixedPrice);
+        document.getElementById('cogs-unfixed-qty').textContent = formatTonnes(cogsUnfixedTonnes);
+        document.getElementById('cogs-unfixed-total').textContent = formatCurrency(cogsUnfixedValue);
+        document.getElementById('cogs-total-qty').textContent = formatTonnes(data.totalSoldTonnes);
+        document.getElementById('cogs-total-price').textContent = formatCurrency(avgBuyPrice);
+        document.getElementById('cogs-total-sum').textContent = formatCurrency(costOfGoodsSold);
+        document.getElementById('open-fixed-price').textContent = formatCurrency(fixedOpenPrice);
+        document.getElementById('open-fixed-qty').textContent = formatTonnes(fixedOpenTonnes);
+        document.getElementById('open-fixed-total').textContent = formatCurrency(fixedOpenValue);
+        document.getElementById('open-unfixed-price').textContent = formatCurrency(unfixedOpenPrice);
+        document.getElementById('open-unfixed-qty').textContent = formatTonnes(unfixedOpenTonnes);
+        document.getElementById('open-unfixed-total').textContent = formatCurrency(unfixedOpenValue);
+        document.getElementById('details-open-qty').textContent = formatTonnes(openPosition);
+        document.getElementById('details-open-price').textContent = formatCurrency(avgBuyPrice);
+        document.getElementById('details-open-total').textContent = formatCurrency(openPositionCost);
+        document.getElementById('sell-fixed-price').textContent = formatCurrency(fixedSellPrice);
+        document.getElementById('sell-fixed-qty').textContent = formatTonnes(fixedSoldTonnes);
+        document.getElementById('sell-fixed-total').textContent = formatCurrency(fixedSoldValue);
+        document.getElementById('sell-unfixed-price').textContent = formatCurrency(unfixedSellPrice);
+        document.getElementById('sell-unfixed-qty').textContent = formatTonnes(unfixedSoldTonnes);
+        document.getElementById('sell-unfixed-total').textContent = formatCurrency(unfixedSoldValue);
+        document.getElementById('details-sell-qty').textContent = formatTonnes(data.totalSoldTonnes);
+        document.getElementById('details-sell-price').textContent = formatCurrency(avgSellPrice);
+        document.getElementById('details-sell-total').textContent = formatCurrency(data.totalSoldValue);
+
+        const actualProfit = data.totalSoldValue - costOfGoodsSold;
+        document.getElementById('summary-sold-qty').textContent = formatTonnes(data.totalSoldTonnes);
+        document.getElementById('summary-actual-income').textContent = formatCurrency(data.totalSoldValue, true);
+        document.getElementById('summary-actual-cogs').textContent = formatCurrency(costOfGoodsSold, true);
+        const summaryActualProfitEl = document.getElementById('summary-actual-profit');
+        summaryActualProfitEl.textContent = formatCurrency(actualProfit);
+        summaryActualProfitEl.classList.toggle('text-red-600', actualProfit < 0);
+        summaryActualProfitEl.classList.toggle('text-green-600', actualProfit >= 0);
+        
+        const projectedSellPrice = parseFloat(document.getElementById('projected-sell-price').value.replace(',', '.')) || 0;
+        const projectedIncome = openPosition * projectedSellPrice;
+        const projectedProfit = projectedIncome - openPositionCost;
+        
+        document.getElementById('summary-open-qty').textContent = formatTonnes(openPosition);
+        document.getElementById('projected-income').textContent = formatCurrency(projectedIncome, true);
+        document.getElementById('projected-cogs').textContent = formatCurrency(openPositionCost, true);
+        const projectedProfitEl = document.getElementById('projected-profit');
+        projectedProfitEl.textContent = formatCurrency(projectedProfit);
+        projectedProfitEl.classList.toggle('text-red-600', projectedProfit < 0);
+        projectedProfitEl.classList.toggle('text-green-600', projectedProfit >= 0);
+        
+        const totalProjectedProfit = actualProfit + projectedProfit;
+        const totalSummaryActualProfitEl = document.getElementById('total-summary-actual-profit');
+        totalSummaryActualProfitEl.textContent = formatCurrency(actualProfit);
+        totalSummaryActualProfitEl.classList.toggle('text-red-400', actualProfit < 0);
+        totalSummaryActualProfitEl.classList.toggle('text-green-400', actualProfit >= 0);
+
+        const totalSummaryProjectedProfitEl = document.getElementById('total-summary-projected-profit');
+        totalSummaryProjectedProfitEl.textContent = formatCurrency(projectedProfit, true);
+        totalSummaryProjectedProfitEl.classList.toggle('text-red-400', projectedProfit < 0);
+        totalSummaryProjectedProfitEl.classList.toggle('text-green-400', projectedProfit >= 0);
+        
+        const totalProjectedProfitEl = document.getElementById('total-projected-profit');
+        totalProjectedProfitEl.textContent = formatCurrency(totalProjectedProfit);
+        totalProjectedProfitEl.classList.toggle('text-red-400', totalProjectedProfit < 0);
+        totalProjectedProfitEl.classList.toggle('text-green-400', totalProjectedProfit >= 0);
+
+        // Vidurkių blokas
+        const actualProfitPerTon = data.totalSoldTonnes > 0 ? actualProfit / data.totalSoldTonnes : 0;
+        const projectedProfitPerTon = openPosition > 0 ? projectedProfit / openPosition : 0;
+        const totalProfitPerTon = data.totalPurchasedTonnes > 0 ? totalProjectedProfit / data.totalPurchasedTonnes : 0;
+        
+        document.getElementById('summary-avg-buy-price').textContent = formatCurrencyPerTon(avgBuyPrice);
+        document.getElementById('summary-avg-actual-sell-price').textContent = formatCurrencyPerTon(avgSellPrice);
+        
+        const summaryActualProfitPerTonEl = document.getElementById('summary-actual-profit-per-ton');
+        summaryActualProfitPerTonEl.textContent = formatCurrencyPerTon(actualProfitPerTon);
+        summaryActualProfitPerTonEl.classList.toggle('text-red-600', actualProfitPerTon < 0);
+        summaryActualProfitPerTonEl.classList.toggle('text-green-600', actualProfitPerTon >= 0);
+
+        const summaryProjectedProfitPerTonEl = document.getElementById('summary-projected-profit-per-ton');
+        summaryProjectedProfitPerTonEl.textContent = formatCurrencyPerTon(projectedProfitPerTon);
+        summaryProjectedProfitPerTonEl.classList.toggle('text-red-600', projectedProfitPerTon < 0);
+        summaryProjectedProfitPerTonEl.classList.toggle('text-green-600', projectedProfitPerTon >= 0);
+        
+        const totalProfitPerTonEl = document.getElementById('summary-total-profit-per-ton');
+        totalProfitPerTonEl.textContent = formatCurrencyPerTon(totalProfitPerTon);
+        totalProfitPerTonEl.classList.toggle('text-red-600', totalProfitPerTon < 0);
+        totalProfitPerTonEl.classList.toggle('text-green-600', totalProfitPerTon >= 0);
+    }
+    
+    // --- PRADINIS INICIALIZAVIMAS ---
+    function initialize() {
+        const grainSelect = document.getElementById('grain-select');
+        for (const [key, value] of Object.entries(allData)) {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = value.name;
+            grainSelect.appendChild(option);
         }
+        grainSelect.value = state.selectedGrain;
+
+        const now = new Date();
+        document.getElementById('timestamp').textContent = `Duomenys atnaujinti: ${now.toISOString().slice(0, 10)} ${now.toTimeString().slice(0, 5)}`;
+        
+        const marketDate = document.getElementById('market-date');
+        if(marketDate) {
+            marketDate.value = now.toISOString().slice(0, 10);
+        }
+
+        document.getElementById('grain-select').addEventListener('change', renderDashboard);
+        document.getElementById('period-select').addEventListener('change', renderDashboard);
+        document.getElementById('projected-sell-price').addEventListener('input', renderDashboard);
+        
+        renderDashboard();
     }
 
-    document.addEventListener('click', function (e) {
-        closeAllLists(e.target);
-    });
-});
+    document.addEventListener('DOMContentLoaded', initialize);
 </script>
-
 </body>
 </html>
 
