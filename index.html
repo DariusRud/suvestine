@@ -321,10 +321,6 @@
                     <span class="summary-label text-amber-200">Prognozuojamas pelnas / nuostolis (reikiamo kiekio)</span>
                     <span id="total-summary-deficit-profit" class="summary-value text-amber-100">€0</span>
                 </div>
-                <div class="summary-row border-amber-700">
-                    <span class="summary-label text-amber-200">Prognozuojamas pelnas / nuostolis (reikiamam kiekiui)</span>
-                    <span class="summary-value text-amber-100">0€</span>
-                </div>
                 <div class="summary-row summary-total border-amber-600">
                     <span class="summary-label text-lg text-amber-100">Bendras Prognozuojamas Pelnas / Nuostolis</span>
                     <span id="total-projected-profit" class="summary-value text-2xl">€0</span>
@@ -363,7 +359,46 @@
 <script>
     // --- DUOMENŲ BAZĖS SIMULIACIJA ---
     const allData = {
-        'salykliniai_mieziai': {
+        'amie': { name: 'Adjunct miežiai', transactions: [] },
+        'aviz': { name: 'Avižos', transactions: [] },
+        'eko': { name: 'Ekologiniai grūdai', transactions: [] },
+        'ekol': { name: 'Ekologiniai grūdai', transactions: [] },
+        'emie': { name: 'Ekologiniai miežiai', transactions: [] },
+        'epup': { name: 'Ekologinės pupos', transactions: [] },
+        'grik': { name: 'Grikiai', transactions: [] },
+        'kuku': { name: 'Kukurūzai', transactions: [] },
+        'kvie': { 
+            name: 'Kviečiai',
+             transactions: [
+                { date: '2025-09-01', type: 'purchase', tonnes: 85000, value: 16150000 },
+                { date: '2025-11-01', type: 'sale', tonnes: 72000, value: 15120000 }
+            ]
+        },
+        'kvru': { name: 'Kvietrugiai', transactions: [] },
+        'lubi': { name: 'Lubinai', transactions: [] },
+        'malto': { name: 'Maltosa salyklas', transactions: [] },
+        'miez': { 
+            name: 'Miežiai', 
+            transactions: [
+                { date: '2025-08-20', type: 'purchase', tonnes: 50000, value: 9500000 },
+                { date: '2025-10-15', type: 'sale', tonnes: 43000, value: 8600000 }
+            ]
+        },
+        'pak01': { name: 'Grūdų pakavimo prekės', transactions: [] },
+        'pasa': { name: 'Pašarai', transactions: [] },
+        'pmie': { name: 'Pašariniai miežiai', transactions: [] },
+        'pupo': { name: 'Pupos', transactions: [] },
+        'raps': { 
+            name: 'Rapsai',
+            transactions: [
+                { date: '2025-07-25', type: 'purchase', tonnes: 25000, value: 11250000 },
+                { date: '2025-09-25', type: 'sale', tonnes: 26000, value: 12220000 } // More sold than purchased
+            ]
+        },
+        'rugi': { name: 'Rugiai', transactions: [] },
+        'saul': { name: 'Saulėgrąžos', transactions: [] },
+        'sekl': { name: 'Sėklos', transactions: [] },
+        'smie': {
             name: 'Salykliniai miežiai',
             transactions: [
                 { date: '2025-09-15', type: 'purchase', tonnes: 26000, value: 5174000 },
@@ -372,38 +407,15 @@
                 { date: '2026-04-10', type: 'sale', tonnes: 19400, value: 4266984 }
             ]
         },
-        'mieziai': { 
-            name: 'Miežiai', 
-            transactions: [
-                { date: '2025-08-20', type: 'purchase', tonnes: 50000, value: 9500000 },
-                { date: '2025-10-15', type: 'sale', tonnes: 43000, value: 8600000 }
-            ]
-        },
-        'kvieciai': { 
-            name: 'Kviečiai',
-             transactions: [
-                { date: '2025-09-01', type: 'purchase', tonnes: 85000, value: 16150000 },
-                { date: '2025-11-01', type: 'sale', tonnes: 72000, value: 15120000 }
-            ]
-        },
-        'salyklas': { 
-            name: 'Salyklas',
-            transactions: [
-                { date: '2025-09-10', type: 'purchase', tonnes: 11000, value: 4950000 },
-                { date: '2025-12-01', type: 'sale', tonnes: 9500, value: 4560000 }
-            ]
-        },
-        'rapsai': { 
-            name: 'Rapsai',
-            transactions: [
-                { date: '2025-07-25', type: 'purchase', tonnes: 25000, value: 11250000 },
-                { date: '2025-09-25', type: 'sale', tonnes: 26000, value: 12220000 } // More sold than purchased
-            ]
-        }
+        'sojo': { name: 'Sojos', transactions: [] },
+        'tras': { name: 'Trašos', transactions: [] },
+        'viki': { name: 'Vikiai', transactions: [] },
+        'vmalt': { name: 'Viking salyklas', transactions: [] },
+        'zirn': { name: 'Žirniai', transactions: [] }
     };
 
     // --- APLIKACIJOS BŪSENA (STATE) ---
-    const state = { selectedGrain: 'salykliniai_mieziai', selectedPeriod: 'visas' };
+    const state = { selectedGrain: 'smie', selectedPeriod: 'visas' };
     
     // --- PAGALBINĖS FUNKCIJOS ---
      const formatCurrency = (val, sign) => {
@@ -422,7 +434,25 @@
     const formatTonnes = (val) => `${new Intl.NumberFormat('lt-LT').format(Math.round(val))} t`;
 
     function getFilteredData() {
+        if (state.selectedGrain === 'visi') {
+            const allTransactions = Object.values(allData).flatMap(grain => grain.transactions);
+            const result = { totalPurchasedTonnes: 0, totalPurchaseValue: 0, totalSoldTonnes: 0, totalSoldValue: 0 };
+            allTransactions.forEach(t => {
+                if (t.type === 'purchase') {
+                    result.totalPurchasedTonnes += t.tonnes;
+                    result.totalPurchaseValue += t.value;
+                } else if (t.type === 'sale') {
+                    result.totalSoldTonnes += t.tonnes;
+                    result.totalSoldValue += t.value;
+                }
+            });
+            return result;
+        }
+
+
         const grainData = allData[state.selectedGrain];
+        if (!grainData) return { totalPurchasedTonnes: 0, totalPurchaseValue: 0, totalSoldTonnes: 0, totalSoldValue: 0 };
+
         const periodSelection = document.getElementById('period-select').value;
         
         let transactionsToProcess = grainData.transactions;
@@ -607,9 +637,15 @@
         for (const [key, value] of Object.entries(allData)) {
             const option = document.createElement('option');
             option.value = key;
-            option.textContent = value.name;
+            option.textContent = `${key.toUpperCase()} ${value.name}`;
             grainSelect.appendChild(option);
         }
+        // Add "Visi" option at the end
+        const allOption = document.createElement('option');
+        allOption.value = 'visi';
+        allOption.textContent = 'Visi';
+        grainSelect.appendChild(allOption);
+
         grainSelect.value = state.selectedGrain;
 
         const now = new Date();
