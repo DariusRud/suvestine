@@ -77,9 +77,18 @@
                     <label for="period-select" class="block text-sm font-medium text-gray-700 mb-2">Laikotarpis</label>
                     <select id="period-select" class="form-select w-full rounded-md shadow-sm">
                         <option value="visas">Visas laikotarpis</option>
-                        <option value="iki">Iki Naujų Metų</option>
-                        <option value="po">Po Naujų Metų</option>
+                        <option value="pasirinkti">Pasirinkti datas</option>
                     </select>
+                </div>
+                <div id="date-range-picker" class="hidden md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                    <div>
+                        <label for="start-date" class="block text-sm font-medium text-gray-700 mb-2">Nuo</label>
+                        <input type="date" id="start-date" class="form-input w-full rounded-md shadow-sm">
+                    </div>
+                    <div>
+                        <label for="end-date" class="block text-sm font-medium text-gray-700 mb-2">Iki</label>
+                        <input type="date" id="end-date" class="form-input w-full rounded-md shadow-sm">
+                    </div>
                 </div>
             </div>
         </div>
@@ -106,7 +115,7 @@
                 </div>
              </div>
         </div>
-        
+
         <!-- Pirkimai -->
         <div class="mb-8 p-6 main-card rounded-xl">
             <h2 class="section-title mb-6">Pirkimai</h2>
@@ -315,15 +324,45 @@
     const allData = {
         'salykliniai_mieziai': {
             name: 'Salykliniai miežiai',
-            periods: {
-                'iki': { totalPurchasedTonnes: 26000, totalPurchaseValue: 5148000, totalSoldTonnes: 19500, totalSoldValue: 4270500 },
-                'po': { totalPurchasedTonnes: 24900, totalPurchaseValue: 4950560, totalSoldTonnes: 19400, totalSoldValue: 4266984 }
-            }
+            transactions: [
+                { date: '2025-09-15', type: 'purchase', tonnes: 13000, value: 2574000 },
+                { date: '2025-11-20', type: 'purchase', tonnes: 13000, value: 2574000 },
+                { date: '2026-01-25', type: 'purchase', tonnes: 12450, value: 2490000 },
+                { date: '2026-03-18', type: 'purchase', tonnes: 12450, value: 2490560 },
+                { date: '2025-10-05', type: 'sale', tonnes: 9750, value: 2135250 },
+                { date: '2025-12-10', type: 'sale', tonnes: 9750, value: 2135250 },
+                { date: '2026-02-15', type: 'sale', tonnes: 9700, value: 2133492 },
+                { date: '2026-04-20', type: 'sale', tonnes: 9700, value: 2133492 }
+            ]
         },
-        'mieziai': { name: 'Miežiai', periods: { 'iki': { totalPurchasedTonnes: 30000, totalPurchaseValue: 5700000, totalSoldTonnes: 25000, totalSoldValue: 5000000 }, 'po': { totalPurchasedTonnes: 20000, totalPurchaseValue: 3800000, totalSoldTonnes: 18000, totalSoldValue: 3600000 }}},
-        'kvieciai': { name: 'Kviečiai', periods: { 'iki': { totalPurchasedTonnes: 40000, totalPurchaseValue: 7600000, totalSoldTonnes: 35000, totalSoldValue: 7350000 }, 'po': { totalPurchasedTonnes: 45000, totalPurchaseValue: 8550000, totalSoldTonnes: 37000, totalSoldValue: 7770000 }}},
-        'salyklas': { name: 'Salyklas', periods: { 'iki': { totalPurchasedTonnes: 5000, totalPurchaseValue: 2250000, totalSoldTonnes: 4000, totalSoldValue: 1920000 }, 'po': { totalPurchasedTonnes: 6000, totalPurchaseValue: 2700000, totalSoldTonnes: 5500, totalSoldValue: 2640000 }}},
-        'rapsai': { name: 'Rapsai', periods: { 'iki': { totalPurchasedTonnes: 15000, totalPurchaseValue: 6750000, totalSoldTonnes: 18000, totalSoldValue: 8460000 }, 'po': { totalPurchasedTonnes: 10000, totalPurchaseValue: 4500000, totalSoldTonnes: 8000, totalSoldValue: 3760000 }}}
+        'mieziai': { 
+            name: 'Miežiai', 
+            transactions: [
+                { date: '2025-08-20', type: 'purchase', tonnes: 50000, value: 9500000 },
+                { date: '2025-10-15', type: 'sale', tonnes: 43000, value: 8600000 }
+            ]
+        },
+        'kvieciai': { 
+            name: 'Kviečiai',
+             transactions: [
+                { date: '2025-09-01', type: 'purchase', tonnes: 85000, value: 16150000 },
+                { date: '2025-11-01', type: 'sale', tonnes: 72000, value: 15120000 }
+            ]
+        },
+        'salyklas': { 
+            name: 'Salyklas',
+            transactions: [
+                { date: '2025-09-10', type: 'purchase', tonnes: 11000, value: 4950000 },
+                { date: '2025-12-01', type: 'sale', tonnes: 9500, value: 4560000 }
+            ]
+        },
+        'rapsai': { 
+            name: 'Rapsai',
+            transactions: [
+                { date: '2025-07-25', type: 'purchase', tonnes: 25000, value: 11250000 },
+                { date: '2025-09-25', type: 'sale', tonnes: 26000, value: 12220000 }
+            ]
+        }
     };
 
     // --- APLIKACIJOS BŪSENA (STATE) ---
@@ -346,27 +385,35 @@
     const formatTonnes = (val) => `${new Intl.NumberFormat('lt-LT').format(Math.round(val))} t`;
 
     function getFilteredData() {
-        const grainKeys = [state.selectedGrain]; 
-        const periodKeys = state.selectedPeriod === 'visas' ? ['iki', 'po'] : [state.selectedPeriod];
-        const result = { totalPurchasedTonnes: 0, totalPurchaseValue: 0, totalSoldTonnes: 0, totalSoldValue: 0 };
-        for (const grainKey of grainKeys) {
-            for (const periodKey of periodKeys) {
-                const data = allData[grainKey].periods[periodKey];
-                if (data) {
-                    result.totalPurchasedTonnes += data.totalPurchasedTonnes;
-                    result.totalPurchaseValue += data.totalPurchaseValue;
-                    result.totalSoldTonnes += data.totalSoldTonnes;
-                    result.totalSoldValue += data.totalSoldValue;
-                }
+        const grainData = allData[state.selectedGrain];
+        const periodSelection = document.getElementById('period-select').value;
+        
+        let transactionsToProcess = grainData.transactions;
+
+        if (periodSelection === 'pasirinkti') {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            if (startDate && endDate) {
+                transactionsToProcess = grainData.transactions.filter(t => t.date >= startDate && t.date <= endDate);
             }
         }
+
+        const result = { totalPurchasedTonnes: 0, totalPurchaseValue: 0, totalSoldTonnes: 0, totalSoldValue: 0 };
+        transactionsToProcess.forEach(t => {
+            if (t.type === 'purchase') {
+                result.totalPurchasedTonnes += t.tonnes;
+                result.totalPurchaseValue += t.value;
+            } else if (t.type === 'sale') {
+                result.totalSoldTonnes += t.tonnes;
+                result.totalSoldValue += t.value;
+            }
+        });
         return result;
     }
 
     // --- RENDERINIMO FUNKCIJOS ---
     function renderDashboard() {
         state.selectedGrain = document.getElementById('grain-select').value;
-        state.selectedPeriod = document.getElementById('period-select').value;
         
         const data = getFilteredData();
         const openPosition = data.totalPurchasedTonnes - data.totalSoldTonnes;
@@ -506,9 +553,25 @@
         if(marketDate) {
             marketDate.value = now.toISOString().slice(0, 10);
         }
+        
+        const periodSelect = document.getElementById('period-select');
+        const dateRangePicker = document.getElementById('date-range-picker');
+        const startDateInput = document.getElementById('start-date');
+        const endDateInput = document.getElementById('end-date');
 
+        periodSelect.addEventListener('change', (e) => {
+            state.selectedPeriod = e.target.value;
+            if (e.target.value === 'pasirinkti') {
+                dateRangePicker.classList.remove('hidden');
+            } else {
+                dateRangePicker.classList.add('hidden');
+            }
+            renderDashboard();
+        });
+
+        startDateInput.addEventListener('change', renderDashboard);
+        endDateInput.addEventListener('change', renderDashboard);
         document.getElementById('grain-select').addEventListener('change', renderDashboard);
-        document.getElementById('period-select').addEventListener('change', renderDashboard);
         document.getElementById('projected-sell-price').addEventListener('input', renderDashboard);
         
         renderDashboard();
