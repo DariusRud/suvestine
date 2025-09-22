@@ -450,6 +450,10 @@
         }).format(val);
     };
     const formatTonnes = (val) => `${new Intl.NumberFormat('lt-LT', {maximumFractionDigits: 0}).format(val)} t`;
+    const formatTonnesWithSign = (val) => {
+        const sign = val > 0 ? '+' : '';
+        return `${sign}${new Intl.NumberFormat('lt-LT', {maximumFractionDigits: 0}).format(val)} t`;
+    };
 
     function getFilteredData() {
         const grainKey = state.selectedGrain;
@@ -528,13 +532,15 @@
         const reportData = Object.keys(monthlyData).sort().map(month => {
             const monthInfo = monthlyData[month];
             const profit = monthInfo.sale.value - monthInfo.purchase.value;
-            runningBalance += monthInfo.purchase.tonnes - monthInfo.sale.tonnes;
+            const monthlyChange = monthInfo.purchase.tonnes - monthInfo.sale.tonnes;
+            runningBalance += monthlyChange;
 
             return {
                 month: month.replace('-', '.'),
                 purchase: { total_t: monthInfo.purchase.tonnes, total_v: monthInfo.purchase.value },
                 sale: { total_t: monthInfo.sale.tonnes, total_v: monthInfo.sale.value },
                 profit: profit,
+                monthlyChange: monthlyChange,
                 balance: runningBalance
             };
         });
@@ -563,6 +569,7 @@
             const p_avg_price = month.purchase.total_t > 0 ? month.purchase.total_v / month.purchase.total_t : 0;
             const s_avg_price = month.sale.total_t > 0 ? month.sale.total_v / month.sale.total_t : 0;
             const profitClass = month.profit >= 0 ? 'text-green-600' : 'text-red-600';
+            const monthlyChangeClass = month.monthlyChange > 0 ? 'text-green-600' : (month.monthlyChange < 0 ? 'text-red-600' : 'text-gray-800');
             const balanceClass = month.balance < 0 ? 'text-red-600' : 'text-gray-800';
 
             return `
@@ -574,6 +581,7 @@
                     <td class="py-3 px-4 text-right font-mono bg-green-50">${formatTonnes(month.sale.total_t)}</td>
                     <td class="py-3 px-4 text-right font-mono bg-green-50">${formatCurrencyPerTon(s_avg_price)}</td>
                     <td class="py-3 px-4 text-right font-mono bg-green-50">${formatCurrency(month.sale.total_v)}</td>
+                    <td class="py-3 px-4 text-right font-mono font-semibold ${monthlyChangeClass} bg-white">${formatTonnesWithSign(month.monthlyChange)}</td>
                     <td class="py-3 px-4 text-right font-mono font-semibold ${balanceClass} bg-white">${formatTonnes(month.balance)}</td>
                     <td class="py-3 px-4 text-right font-mono font-semibold ${profitClass} bg-white">${formatCurrency(month.profit)}</td>
                 </tr>`;
@@ -593,6 +601,7 @@
                         <th rowspan="2" class="py-3 px-4 text-left border-b border-r bg-gray-100 align-bottom">Mėnuo</th>
                         <th colspan="3" class="py-3 px-4 text-center border-b border-r bg-amber-100">Pirkimai</th>
                         <th colspan="3" class="py-3 px-4 text-center border-b border-r bg-green-100">Pardavimai</th>
+                        <th rowspan="2" class="py-3 px-4 text-right border-b border-r bg-gray-100 align-bottom">Mėnesio +/-, t</th>
                         <th rowspan="2" class="py-3 px-4 text-right border-b border-r bg-gray-100 align-bottom">Likutis, t</th>
                         <th rowspan="2" class="py-3 px-4 text-right border-b bg-gray-100 align-bottom">Pelnas</th>
                     </tr>
@@ -617,6 +626,7 @@
                         <td class="py-4 px-4 text-right font-mono bg-green-100">${formatTonnes(grandTotal.sale_t)}</td>
                         <td class="py-4 px-4 text-right font-mono bg-green-100">${formatCurrencyPerTon(grandTotalAvgSalePrice)}</td>
                         <td class="py-4 px-4 text-right font-mono bg-green-100">${formatCurrency(grandTotal.sale_v)}</td>
+                        <td class="py-4 px-4 text-right bg-gray-200"></td>
                         <td class="py-4 px-4 text-right font-mono text-base ${finalBalanceClass} bg-gray-200">${formatTonnes(finalBalance)}</td>
                         <td class="py-4 px-4 text-right font-mono text-base ${grandTotalProfitClass} bg-gray-200">${formatCurrency(grandTotal.profit)}</td>
                     </tr>
