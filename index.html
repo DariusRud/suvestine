@@ -524,15 +524,18 @@
             }
         });
         
+        let runningBalance = 0;
         const reportData = Object.keys(monthlyData).sort().map(month => {
             const monthInfo = monthlyData[month];
             const profit = monthInfo.sale.value - monthInfo.purchase.value;
+            runningBalance += monthInfo.purchase.tonnes - monthInfo.sale.tonnes;
 
             return {
                 month: month.replace('-', '.'),
                 purchase: { total_t: monthInfo.purchase.tonnes, total_v: monthInfo.purchase.value },
                 sale: { total_t: monthInfo.sale.tonnes, total_v: monthInfo.sale.value },
-                profit: profit
+                profit: profit,
+                balance: runningBalance
             };
         });
         
@@ -560,56 +563,62 @@
             const p_avg_price = month.purchase.total_t > 0 ? month.purchase.total_v / month.purchase.total_t : 0;
             const s_avg_price = month.sale.total_t > 0 ? month.sale.total_v / month.sale.total_t : 0;
             const profitClass = month.profit >= 0 ? 'text-green-600' : 'text-red-600';
+            const balanceClass = month.balance < 0 ? 'text-red-600' : 'text-gray-800';
 
             return `
                 <tr class="border-b border-gray-200">
-                    <td class="py-3 px-6 text-left whitespace-nowrap font-medium bg-white">${month.month}</td>
-                    <td class="py-3 px-6 text-right font-mono bg-amber-50">${formatTonnes(month.purchase.total_t)}</td>
-                    <td class="py-3 px-6 text-right font-mono bg-amber-50">${formatCurrencyPerTon(p_avg_price)}</td>
-                    <td class="py-3 px-6 text-right font-mono bg-amber-50">${formatCurrency(month.purchase.total_v)}</td>
-                    <td class="py-3 px-6 text-right font-mono bg-green-50">${formatTonnes(month.sale.total_t)}</td>
-                    <td class="py-3 px-6 text-right font-mono bg-green-50">${formatCurrencyPerTon(s_avg_price)}</td>
-                    <td class="py-3 px-6 text-right font-mono bg-green-50">${formatCurrency(month.sale.total_v)}</td>
-                    <td class="py-3 px-6 text-right font-mono font-semibold ${profitClass} bg-white">${formatCurrency(month.profit)}</td>
+                    <td class="py-3 px-4 text-left whitespace-nowrap font-medium bg-white">${month.month}</td>
+                    <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatTonnes(month.purchase.total_t)}</td>
+                    <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatCurrencyPerTon(p_avg_price)}</td>
+                    <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatCurrency(month.purchase.total_v)}</td>
+                    <td class="py-3 px-4 text-right font-mono bg-green-50">${formatTonnes(month.sale.total_t)}</td>
+                    <td class="py-3 px-4 text-right font-mono bg-green-50">${formatCurrencyPerTon(s_avg_price)}</td>
+                    <td class="py-3 px-4 text-right font-mono bg-green-50">${formatCurrency(month.sale.total_v)}</td>
+                    <td class="py-3 px-4 text-right font-mono font-semibold ${balanceClass} bg-white">${formatTonnes(month.balance)}</td>
+                    <td class="py-3 px-4 text-right font-mono font-semibold ${profitClass} bg-white">${formatCurrency(month.profit)}</td>
                 </tr>`;
         }).join('');
 
         const grandTotalAvgPurchasePrice = grandTotal.purchase_t > 0 ? grandTotal.purchase_v / grandTotal.purchase_t : 0;
         const grandTotalAvgSalePrice = grandTotal.sale_t > 0 ? grandTotal.sale_v / grandTotal.sale_t : 0;
         const grandTotalProfitClass = grandTotal.profit >= 0 ? 'text-green-700' : 'text-red-700';
+        const finalBalance = grandTotal.purchase_t - grandTotal.sale_t;
+        const finalBalanceClass = finalBalance < 0 ? 'text-red-700' : 'text-gray-800';
 
         const tableHtml = `
         <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-md">
-            <table class="min-w-full bg-white">
-                <thead class="text-gray-600 uppercase text-sm leading-normal">
+            <table class="min-w-full bg-white text-sm">
+                <thead class="text-gray-600 uppercase text-xs leading-normal">
                     <tr>
-                        <th rowspan="2" class="py-3 px-6 text-left border-b border-r bg-gray-100 align-bottom">Mėnuo</th>
-                        <th colspan="3" class="py-3 px-6 text-center border-b border-r bg-amber-100">Pirkimai</th>
-                        <th colspan="3" class="py-3 px-6 text-center border-b border-r bg-green-100">Pardavimai</th>
-                        <th rowspan="2" class="py-3 px-6 text-right border-b bg-gray-100 align-bottom">Pelnas</th>
+                        <th rowspan="2" class="py-3 px-4 text-left border-b border-r bg-gray-100 align-bottom">Mėnuo</th>
+                        <th colspan="3" class="py-3 px-4 text-center border-b border-r bg-amber-100">Pirkimai</th>
+                        <th colspan="3" class="py-3 px-4 text-center border-b border-r bg-green-100">Pardavimai</th>
+                        <th rowspan="2" class="py-3 px-4 text-right border-b border-r bg-gray-100 align-bottom">Likutis, t</th>
+                        <th rowspan="2" class="py-3 px-4 text-right border-b bg-gray-100 align-bottom">Pelnas</th>
                     </tr>
                     <tr>
-                        <th class="py-3 px-6 text-right border-b border-r bg-amber-50">Kiekis, t</th>
-                        <th class="py-3 px-6 text-right border-b border-r bg-amber-50">Vid. Kaina, €/t</th>
-                        <th class="py-3 px-6 text-right border-b border-r bg-amber-50">Suma, €</th>
-                        <th class="py-3 px-6 text-right border-b border-r bg-green-50">Kiekis, t</th>
-                        <th class="py-3 px-6 text-right border-b border-r bg-green-50">Vid. Kaina, €/t</th>
-                        <th class="py-3 px-6 text-right border-b border-r bg-green-50">Suma, €</th>
+                        <th class="py-3 px-4 text-right border-b border-r bg-amber-50">Kiekis</th>
+                        <th class="py-3 px-4 text-right border-b border-r bg-amber-50">Vid. Kaina</th>
+                        <th class="py-3 px-4 text-right border-b border-r bg-amber-50">Suma</th>
+                        <th class="py-3 px-4 text-right border-b border-r bg-green-50">Kiekis</th>
+                        <th class="py-3 px-4 text-right border-b border-r bg-green-50">Vid. Kaina</th>
+                        <th class="py-3 px-4 text-right border-b border-r bg-green-50">Suma</th>
                     </tr>
                 </thead>
-                <tbody class="text-gray-700 text-sm font-light">
+                <tbody class="text-gray-700 font-light">
                     ${tableRows}
                 </tbody>
-                <tfoot class="text-gray-800 text-sm font-bold">
+                <tfoot class="text-gray-800 font-bold">
                     <tr class="border-t-2 border-gray-300">
-                        <td class="py-4 px-6 text-left bg-gray-200">Bendra Suma</td>
-                        <td class="py-4 px-6 text-right font-mono bg-amber-100">${formatTonnes(grandTotal.purchase_t)}</td>
-                        <td class="py-4 px-6 text-right font-mono bg-amber-100">${formatCurrencyPerTon(grandTotalAvgPurchasePrice)}</td>
-                        <td class="py-4 px-6 text-right font-mono bg-amber-100">${formatCurrency(grandTotal.purchase_v)}</td>
-                        <td class="py-4 px-6 text-right font-mono bg-green-100">${formatTonnes(grandTotal.sale_t)}</td>
-                        <td class="py-4 px-6 text-right font-mono bg-green-100">${formatCurrencyPerTon(grandTotalAvgSalePrice)}</td>
-                        <td class="py-4 px-6 text-right font-mono bg-green-100">${formatCurrency(grandTotal.sale_v)}</td>
-                        <td class="py-4 px-6 text-right font-mono text-base ${grandTotalProfitClass} bg-gray-200">${formatCurrency(grandTotal.profit)}</td>
+                        <td class="py-4 px-4 text-left bg-gray-200">Bendra Suma</td>
+                        <td class="py-4 px-4 text-right font-mono bg-amber-100">${formatTonnes(grandTotal.purchase_t)}</td>
+                        <td class="py-4 px-4 text-right font-mono bg-amber-100">${formatCurrencyPerTon(grandTotalAvgPurchasePrice)}</td>
+                        <td class="py-4 px-4 text-right font-mono bg-amber-100">${formatCurrency(grandTotal.purchase_v)}</td>
+                        <td class="py-4 px-4 text-right font-mono bg-green-100">${formatTonnes(grandTotal.sale_t)}</td>
+                        <td class="py-4 px-4 text-right font-mono bg-green-100">${formatCurrencyPerTon(grandTotalAvgSalePrice)}</td>
+                        <td class="py-4 px-4 text-right font-mono bg-green-100">${formatCurrency(grandTotal.sale_v)}</td>
+                        <td class="py-4 px-4 text-right font-mono text-base ${finalBalanceClass} bg-gray-200">${formatTonnes(finalBalance)}</td>
+                        <td class="py-4 px-4 text-right font-mono text-base ${grandTotalProfitClass} bg-gray-200">${formatCurrency(grandTotal.profit)}</td>
                     </tr>
                 </tfoot>
             </table>
