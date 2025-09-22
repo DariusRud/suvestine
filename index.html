@@ -82,7 +82,7 @@
                     <button class="tab-button inline-block p-4 border-b-2 rounded-t-lg" id="summary-tab" type="button">Suvestinė</button>
                 </li>
                 <li role="presentation">
-                    <button class="tab-button inline-block p-4 border-b-2 rounded-t-lg" id="details-tab" type="button">Detalizavimas</button>
+                    <button class="tab-button inline-block p-4 border-b-2 rounded-t-lg" id="details-tab" type="button">Pamėnesiui</button>
                 </li>
             </ul>
         </div>
@@ -202,6 +202,35 @@
                                         <span id="details-open-qty" class="text-right font-mono font-bold text-base">0 t</span>
                                         <span id="details-open-total" class="text-right font-mono font-bold text-base">€0</span>
                                     </div>
+                                </div>
+                            </div>
+                             <!-- Likutis Sandėlyje -->
+                            <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                                <h3 class="font-bold text-gray-800 mb-4">LIKUTIS SANDĖLYJE <span class="font-normal text-blue-600">(RANKINIS ĮVEDIMAS)</span></h3>
+                                <div class="grid grid-cols-4 gap-4 items-end text-sm">
+                                    <span class="text-gray-600 col-span-1">Papildomas likutis:</span>
+                                    <div>
+                                        <label for="inventory-price" class="block text-xs text-gray-500 mb-1">Savikaina, €/t</label>
+                                        <input type="text" inputmode="decimal" id="inventory-price" class="form-input w-full rounded-md shadow-sm text-right font-mono" value="0">
+                                    </div>
+                                    <div>
+                                        <label for="inventory-qty" class="block text-xs text-gray-500 mb-1">Kiekis, t</label>
+                                        <input type="text" inputmode="decimal" id="inventory-qty" class="form-input w-full rounded-md shadow-sm text-right font-mono" value="0">
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="block text-xs text-gray-500 mb-1">Savikainos Suma</span>
+                                        <span id="inventory-total" class="font-bold font-mono text-base">€0,00</span>
+                                    </div>
+                                </div>
+                            </div>
+                             <!-- Viso Neparduota -->
+                            <div class="p-4 bg-gray-200 rounded-lg border border-gray-300">
+                                <h3 class="font-bold text-gray-800 mb-4">VISO NEPARDUOTA</h3>
+                                <div class="grid grid-cols-4 gap-4 items-center text-sm">
+                                    <span class="font-bold col-span-1">Bendrai:</span>
+                                    <span id="total-unsold-price" class="text-right font-mono font-bold text-base">€0</span>
+                                    <span id="total-unsold-qty" class="text-right font-mono font-bold text-base">0 t</span>
+                                    <span id="total-unsold-total" class="font-bold text-right font-mono text-base">€0</span>
                                 </div>
                             </div>
                         </div>
@@ -528,7 +557,8 @@
             }
         });
         
-        let runningBalance = 0;
+        const inventoryQty = parseFloat(document.getElementById('inventory-qty').value.replace(',', '.')) || 0;
+        let runningBalance = inventoryQty;
         const reportData = Object.keys(monthlyData).sort().map(month => {
             const monthInfo = monthlyData[month];
             const profit = monthInfo.sale.value - monthInfo.purchase.value;
@@ -569,7 +599,7 @@
             const p_avg_price = month.purchase.total_t > 0 ? month.purchase.total_v / month.purchase.total_t : 0;
             const s_avg_price = month.sale.total_t > 0 ? month.sale.total_v / month.sale.total_t : 0;
             const profitClass = month.profit >= 0 ? 'text-green-600' : 'text-red-600';
-            const monthlyChangeClass = month.monthlyChange > 0 ? 'text-green-600' : (month.monthlyChange < 0 ? 'text-red-600' : 'text-gray-800');
+            const monthlyChangeClass = month.monthlyChange >= 0 ? 'text-green-600' : 'text-red-600';
             const balanceClass = month.balance < 0 ? 'text-red-600' : 'text-gray-800';
 
             return `
@@ -586,11 +616,12 @@
                     <td class="py-3 px-4 text-right font-mono font-semibold ${profitClass} bg-white">${formatCurrency(month.profit)}</td>
                 </tr>`;
         }).join('');
-
+        
+        const inventoryQty = parseFloat(document.getElementById('inventory-qty').value.replace(',', '.')) || 0;
         const grandTotalAvgPurchasePrice = grandTotal.purchase_t > 0 ? grandTotal.purchase_v / grandTotal.purchase_t : 0;
         const grandTotalAvgSalePrice = grandTotal.sale_t > 0 ? grandTotal.sale_v / grandTotal.sale_t : 0;
         const grandTotalProfitClass = grandTotal.profit >= 0 ? 'text-green-700' : 'text-red-700';
-        const finalBalance = grandTotal.purchase_t - grandTotal.sale_t;
+        const finalBalance = inventoryQty + grandTotal.purchase_t - grandTotal.sale_t;
         const finalBalanceClass = finalBalance < 0 ? 'text-red-700' : 'text-gray-800';
 
         const tableHtml = `
@@ -642,91 +673,127 @@
     function renderDashboard() {
         state.selectedGrain = document.getElementById('grain-select').value;
         
-        const data = getFilteredData();
-        const openPosition = data.totalPurchasedTonnes - data.totalSoldTonnes;
-        const avgBuyPrice = data.totalPurchasedTonnes > 0 ? data.totalPurchaseValue / data.totalPurchasedTonnes : 0;
-        const avgSellPrice = data.totalSoldTonnes > 0 ? data.totalSoldValue / data.totalSoldTonnes : 0;
+        // 1. Get manual inventory input
+        const inventoryQty = parseFloat(document.getElementById('inventory-qty').value.replace(',', '.')) || 0;
+        const inventoryPrice = parseFloat(document.getElementById('inventory-price').value.replace(',', '.')) || 0;
+        const inventoryTotalValue = inventoryQty * inventoryPrice;
+        document.getElementById('inventory-total').textContent = formatCurrency(inventoryTotalValue);
 
+        // 2. Get contract data from "database"
+        const contractData = getFilteredData();
+        const contractAvgBuyPrice = contractData.totalPurchasedTonnes > 0 ? contractData.totalPurchaseValue / contractData.totalPurchasedTonnes : 0;
+        const totalSoldTonnes = contractData.totalSoldTonnes;
+        const totalSoldValue = contractData.totalSoldValue;
+        const avgSellPrice = totalSoldTonnes > 0 ? totalSoldValue / totalSoldTonnes : 0;
+        
+        // 3. Calculate Contract-only open position and its value
+        const contractOpenQty = contractData.totalPurchasedTonnes - totalSoldTonnes;
+        const contractOpenValue = contractOpenQty * contractAvgBuyPrice;
+
+        // 4. Calculate TOTAL unsold goods and their WEIGHTED AVERAGE cost
+        const totalUnsoldQty = contractOpenQty + inventoryQty;
+        const totalUnsoldValue = contractOpenValue + inventoryTotalValue;
+        const totalUnsoldAvgPrice = totalUnsoldQty > 0 ? totalUnsoldValue / totalUnsoldQty : 0;
+        
+        // 5. Calculate Cost of Goods Sold (COGS) using CONTRACT-ONLY average price
+        const costOfGoodsSold = totalSoldTonnes * contractAvgBuyPrice;
+        
+        // 6. Calculate TOTAL open position (for projections) - this is the same as totalUnsold
+        const totalOpenPosition = totalUnsoldQty;
+        const totalOpenPositionValue = totalUnsoldValue;
+
+
+        // --- UI POPULATION ---
+
+        // Cosmetic splits for display - these don't affect main calculations
         const fixedRatio = 0.4;
         const priceAdjustment = 2;
-        
-        const costOfGoodsSold = data.totalSoldTonnes * avgBuyPrice;
-        const cogsFixedTonnes = data.totalSoldTonnes * fixedRatio;
-        const cogsUnfixedTonnes = data.totalSoldTonnes * (1 - fixedRatio);
-        const cogsFixedPrice = avgBuyPrice - priceAdjustment;
+
+        // Populate "Nupirktas kiekis (parduota)" - COGS
+        document.getElementById('cogs-total-qty').textContent = formatTonnes(totalSoldTonnes);
+        document.getElementById('cogs-total-price').textContent = formatCurrencyPerTon(contractAvgBuyPrice);
+        document.getElementById('cogs-total-sum').textContent = formatCurrency(costOfGoodsSold);
+        const cogsFixedTonnes = totalSoldTonnes * fixedRatio;
+        const cogsUnfixedTonnes = totalSoldTonnes * (1-fixedRatio);
+        const cogsFixedPrice = contractAvgBuyPrice - priceAdjustment;
         const cogsFixedValue = cogsFixedTonnes * cogsFixedPrice;
         const cogsUnfixedValue = costOfGoodsSold - cogsFixedValue;
         const cogsUnfixedPrice = cogsUnfixedTonnes > 0 ? cogsUnfixedValue / cogsUnfixedTonnes : 0;
-
-        const openPositionCost = openPosition * avgBuyPrice;
-        const fixedOpenTonnes = openPosition * fixedRatio;
-        const unfixedOpenTonnes = openPosition * (1 - fixedRatio);
-        const fixedOpenPrice = avgBuyPrice - priceAdjustment;
-        const fixedOpenValue = fixedOpenTonnes * fixedOpenPrice;
-        const unfixedOpenValue = openPositionCost - fixedOpenValue;
-        const unfixedOpenPrice = unfixedOpenTonnes > 0 ? unfixedOpenValue / unfixedOpenTonnes : 0;
-        
-        const fixedSoldTonnes = data.totalSoldTonnes * fixedRatio;
-        const unfixedSoldTonnes = data.totalSoldTonnes * (1 - fixedRatio);
-        const fixedSellPrice = avgSellPrice - priceAdjustment;
-        const fixedSoldValue = fixedSoldTonnes * fixedSellPrice;
-        const unfixedSoldValue = data.totalSoldValue - fixedSoldValue;
-        const unfixedSellPrice = unfixedSoldTonnes > 0 ? unfixedSoldValue / unfixedSoldTonnes : 0;
-
-        document.getElementById('cogs-fixed-price').textContent = formatCurrency(cogsFixedPrice);
+        document.getElementById('cogs-fixed-price').textContent = formatCurrencyPerTon(cogsFixedPrice);
+        document.getElementById('cogs-unfixed-price').textContent = formatCurrencyPerTon(cogsUnfixedPrice);
         document.getElementById('cogs-fixed-qty').textContent = formatTonnes(cogsFixedTonnes);
-        document.getElementById('cogs-fixed-total').textContent = formatCurrency(cogsFixedValue);
-        document.getElementById('cogs-unfixed-price').textContent = formatCurrency(cogsUnfixedPrice);
         document.getElementById('cogs-unfixed-qty').textContent = formatTonnes(cogsUnfixedTonnes);
+        document.getElementById('cogs-fixed-total').textContent = formatCurrency(cogsFixedValue);
         document.getElementById('cogs-unfixed-total').textContent = formatCurrency(cogsUnfixedValue);
-        document.getElementById('cogs-total-qty').textContent = formatTonnes(data.totalSoldTonnes);
-        document.getElementById('cogs-total-price').textContent = formatCurrency(avgBuyPrice);
-        document.getElementById('cogs-total-sum').textContent = formatCurrency(costOfGoodsSold);
-        document.getElementById('open-fixed-price').textContent = formatCurrency(fixedOpenPrice);
-        document.getElementById('open-fixed-qty').textContent = formatTonnes(fixedOpenTonnes);
-        document.getElementById('open-fixed-total').textContent = formatCurrency(fixedOpenValue);
-        document.getElementById('open-unfixed-price').textContent = formatCurrency(unfixedOpenPrice);
-        document.getElementById('open-unfixed-qty').textContent = formatTonnes(unfixedOpenTonnes);
-        document.getElementById('open-unfixed-total').textContent = formatCurrency(unfixedOpenValue);
-        document.getElementById('details-open-qty').textContent = formatTonnes(openPosition);
-        document.getElementById('details-open-price').textContent = formatCurrency(avgBuyPrice);
-        document.getElementById('details-open-total').textContent = formatCurrency(openPositionCost);
-        document.getElementById('sell-fixed-price').textContent = formatCurrency(fixedSellPrice);
-        document.getElementById('sell-fixed-qty').textContent = formatTonnes(fixedSoldTonnes);
-        document.getElementById('sell-fixed-total').textContent = formatCurrency(fixedSoldValue);
-        document.getElementById('sell-unfixed-price').textContent = formatCurrency(unfixedSellPrice);
-        document.getElementById('sell-unfixed-qty').textContent = formatTonnes(unfixedSoldTonnes);
-        document.getElementById('sell-unfixed-total').textContent = formatCurrency(unfixedSoldValue);
-        document.getElementById('details-sell-qty').textContent = formatTonnes(data.totalSoldTonnes);
-        document.getElementById('details-sell-price').textContent = formatCurrency(avgSellPrice);
-        document.getElementById('details-sell-total').textContent = formatCurrency(data.totalSoldValue);
+        
+        // Populate "Nupirktas kiekis (neparduotas)" - Contract-only open position
+        document.getElementById('details-open-qty').textContent = formatTonnes(contractOpenQty);
+        document.getElementById('details-open-price').textContent = formatCurrencyPerTon(contractAvgBuyPrice);
+        document.getElementById('details-open-total').textContent = formatCurrency(contractOpenValue);
+        const openFixedTonnes = contractOpenQty * fixedRatio;
+        const openUnfixedTonnes = contractOpenQty * (1-fixedRatio);
+        const openFixedPrice = contractAvgBuyPrice - priceAdjustment;
+        const openFixedValue = openFixedTonnes * openFixedPrice;
+        const openUnfixedValue = contractOpenValue - openFixedValue;
+        const openUnfixedPrice = openUnfixedTonnes > 0 ? openUnfixedValue/openUnfixedTonnes:0;
+        document.getElementById('open-fixed-price').textContent = formatCurrencyPerTon(openFixedPrice);
+        document.getElementById('open-unfixed-price').textContent = formatCurrencyPerTon(openUnfixedPrice);
+        document.getElementById('open-fixed-qty').textContent = formatTonnes(openFixedTonnes);
+        document.getElementById('open-unfixed-qty').textContent = formatTonnes(openUnfixedTonnes);
+        document.getElementById('open-fixed-total').textContent = formatCurrency(openFixedValue);
+        document.getElementById('open-unfixed-total').textContent = formatCurrency(openUnfixedValue);
 
-        const actualProfit = data.totalSoldValue - costOfGoodsSold;
-        document.getElementById('summary-sold-qty').textContent = formatTonnes(data.totalSoldTonnes);
-        document.getElementById('summary-actual-income').textContent = formatCurrency(data.totalSoldValue, true);
+        // Populate NEW "Viso neparduota" block
+        document.getElementById('total-unsold-qty').textContent = formatTonnes(totalUnsoldQty);
+        document.getElementById('total-unsold-price').textContent = formatCurrencyPerTon(totalUnsoldAvgPrice);
+        document.getElementById('total-unsold-total').textContent = formatCurrency(totalUnsoldValue);
+
+        // Populate "Pardavimai" blocks
+        document.getElementById('details-sell-qty').textContent = formatTonnes(totalSoldTonnes);
+        document.getElementById('details-sell-price').textContent = formatCurrencyPerTon(avgSellPrice);
+        document.getElementById('details-sell-total').textContent = formatCurrency(totalSoldValue);
+        const sellFixedTonnes = totalSoldTonnes * fixedRatio;
+        const sellUnfixedTonnes = totalSoldTonnes * (1 - fixedRatio);
+        const sellFixedPrice = avgSellPrice - priceAdjustment;
+        const sellFixedValue = sellFixedTonnes * sellFixedPrice;
+        const sellUnfixedValue = totalSoldValue - sellFixedValue;
+        const sellUnfixedPrice = sellUnfixedTonnes > 0 ? sellUnfixedValue/sellUnfixedTonnes : 0;
+        document.getElementById('sell-fixed-qty').textContent = formatTonnes(sellFixedTonnes);
+        document.getElementById('sell-unfixed-qty').textContent = formatTonnes(sellUnfixedTonnes);
+        document.getElementById('sell-fixed-price').textContent = formatCurrencyPerTon(sellFixedPrice);
+        document.getElementById('sell-unfixed-price').textContent = formatCurrencyPerTon(sellUnfixedPrice);
+        document.getElementById('sell-fixed-total').textContent = formatCurrency(sellFixedValue);
+        document.getElementById('sell-unfixed-total').textContent = formatCurrency(sellUnfixedValue);
+
+
+        // Populate "Faktinė būsena"
+        const actualProfit = totalSoldValue - costOfGoodsSold;
+        document.getElementById('summary-sold-qty').textContent = formatTonnes(totalSoldTonnes);
+        document.getElementById('summary-actual-income').textContent = formatCurrency(totalSoldValue, true);
         document.getElementById('summary-actual-cogs').textContent = formatCurrency(costOfGoodsSold, true);
         const summaryActualProfitEl = document.getElementById('summary-actual-profit');
         summaryActualProfitEl.textContent = formatCurrency(actualProfit);
         summaryActualProfitEl.classList.toggle('text-red-600', actualProfit < 0);
         summaryActualProfitEl.classList.toggle('text-green-600', actualProfit >= 0);
         
+        // Populate Projections (using TOTAL open position)
         let projectedProfit = 0;
         const surplusBlock = document.getElementById('surplus-projection-block');
         const deficitBlock = document.getElementById('deficit-projection-block');
         const totalSurplusRow = document.getElementById('total-surplus-row');
         const totalDeficitRow = document.getElementById('total-deficit-row');
 
-        if (openPosition >= 0) {
+        if (totalOpenPosition >= 0) {
             surplusBlock.classList.remove('inactive-block');
             deficitBlock.classList.add('inactive-block');
             totalSurplusRow.classList.remove('hidden');
             totalDeficitRow.classList.add('hidden');
             const projectedSellPrice = parseFloat(document.getElementById('projected-sell-price').value.replace(',', '.')) || 0;
-            const projectedIncome = openPosition * projectedSellPrice;
-            projectedProfit = projectedIncome - openPositionCost;
-            document.getElementById('surplus-open-qty').textContent = formatTonnes(openPosition);
+            const projectedIncome = totalOpenPosition * projectedSellPrice;
+            projectedProfit = projectedIncome - totalOpenPositionValue;
+            document.getElementById('surplus-open-qty').textContent = formatTonnes(totalOpenPosition);
             document.getElementById('projected-income').textContent = formatCurrency(projectedIncome, true);
-            document.getElementById('projected-cogs').textContent = formatCurrency(openPositionCost, true);
+            document.getElementById('projected-cogs').textContent = formatCurrency(totalOpenPositionValue, true);
             const projectedProfitEl = document.getElementById('projected-profit');
             projectedProfitEl.textContent = formatCurrency(projectedProfit);
             projectedProfitEl.classList.toggle('text-red-600', projectedProfit < 0);
@@ -737,10 +804,10 @@
             totalSurplusRow.classList.add('hidden');
             totalDeficitRow.classList.remove('hidden');
             const projectedBuyPrice = parseFloat(document.getElementById('projected-buy-price').value.replace(',', '.')) || 0;
-            const projectedCost = Math.abs(openPosition) * projectedBuyPrice;
-            const revenueForDeficit = Math.abs(openPosition) * avgSellPrice;
+            const projectedCost = Math.abs(totalOpenPosition) * projectedBuyPrice;
+            const revenueForDeficit = Math.abs(totalOpenPosition) * avgSellPrice;
             projectedProfit = revenueForDeficit - projectedCost;
-            document.getElementById('deficit-open-qty').textContent = formatTonnes(Math.abs(openPosition));
+            document.getElementById('deficit-open-qty').textContent = formatTonnes(Math.abs(totalOpenPosition));
             document.getElementById('deficit-income').textContent = formatCurrency(revenueForDeficit, true);
             document.getElementById('deficit-cogs').textContent = formatCurrency(projectedCost, true);
             const deficitProfitEl = document.getElementById('deficit-profit');
@@ -749,34 +816,25 @@
             deficitProfitEl.classList.toggle('text-green-600', projectedProfit >= 0);
         }
         
+        // Populate final summaries
         const totalProjectedProfit = actualProfit + projectedProfit;
-        const totalSummaryActualProfitEl = document.getElementById('total-summary-actual-profit');
-        totalSummaryActualProfitEl.textContent = formatCurrency(actualProfit);
-        totalSummaryActualProfitEl.classList.toggle('text-red-400', actualProfit < 0);
-        totalSummaryActualProfitEl.classList.toggle('text-green-400', actualProfit >= 0);
-        document.getElementById('total-summary-surplus-profit').textContent = formatCurrency(openPosition >= 0 ? projectedProfit : 0, true);
-        document.getElementById('total-summary-deficit-profit').textContent = formatCurrency(openPosition < 0 ? projectedProfit : 0, true);
-        const totalProjectedProfitEl = document.getElementById('total-projected-profit');
-        totalProjectedProfitEl.textContent = formatCurrency(totalProjectedProfit);
-        totalProjectedProfitEl.classList.toggle('text-red-400', totalProjectedProfit < 0);
-        totalProjectedProfitEl.classList.toggle('text-green-400', totalProjectedProfit >= 0);
-        const actualProfitPerTon = data.totalSoldTonnes > 0 ? (avgSellPrice - (costOfGoodsSold/data.totalSoldTonnes)) : 0;
-        const projectedProfitPerTon = openPosition !== 0 ? projectedProfit / Math.abs(openPosition) : 0;
-        const totalProfitPerTon = data.totalPurchasedTonnes > 0 ? totalProjectedProfit / data.totalPurchasedTonnes : 0;
-        document.getElementById('summary-avg-buy-price').textContent = formatCurrencyPerTon(avgBuyPrice);
+        document.getElementById('total-summary-actual-profit').textContent = formatCurrency(actualProfit);
+        document.getElementById('total-summary-surplus-profit').textContent = formatCurrency(totalOpenPosition >= 0 ? projectedProfit : 0, true);
+        document.getElementById('total-summary-deficit-profit').textContent = formatCurrency(totalOpenPosition < 0 ? projectedProfit : 0, true);
+        document.getElementById('total-projected-profit').textContent = formatCurrency(totalProjectedProfit);
+
+        // Populate averages
+        const overallAvgBuyPrice = (contractData.totalPurchasedTonnes + inventoryQty) > 0 ? (contractData.totalPurchaseValue + inventoryTotalValue) / (contractData.totalPurchasedTonnes + inventoryQty) : 0;
+        const actualProfitPerTon = totalSoldTonnes > 0 ? actualProfit / totalSoldTonnes : 0;
+        const projectedProfitPerTon = totalOpenPosition !== 0 ? projectedProfit / Math.abs(totalOpenPosition) : 0;
+        const totalPurchasedAndInventory = contractData.totalPurchasedTonnes + inventoryQty;
+        const totalProfitPerTon = totalPurchasedAndInventory > 0 ? totalProjectedProfit / totalPurchasedAndInventory : 0;
+        
+        document.getElementById('summary-avg-buy-price').textContent = formatCurrencyPerTon(overallAvgBuyPrice);
         document.getElementById('summary-avg-actual-sell-price').textContent = formatCurrencyPerTon(avgSellPrice);
-        const summaryActualProfitPerTonEl = document.getElementById('summary-actual-profit-per-ton');
-        summaryActualProfitPerTonEl.textContent = formatCurrencyPerTon(actualProfitPerTon);
-        summaryActualProfitPerTonEl.classList.toggle('text-red-600', actualProfitPerTon < 0);
-        summaryActualProfitPerTonEl.classList.toggle('text-green-600', actualProfitPerTon >= 0);
-        const summaryProjectedProfitPerTonEl = document.getElementById('summary-projected-profit-per-ton');
-        summaryProjectedProfitPerTonEl.textContent = formatCurrencyPerTon(projectedProfitPerTon);
-        summaryProjectedProfitPerTonEl.classList.toggle('text-red-600', projectedProfitPerTon < 0);
-        summaryProjectedProfitPerTonEl.classList.toggle('text-green-600', projectedProfitPerTon >= 0);
-        const totalProfitPerTonEl = document.getElementById('summary-total-profit-per-ton');
-        totalProfitPerTonEl.textContent = formatCurrencyPerTon(totalProfitPerTon);
-        totalProfitPerTonEl.classList.toggle('text-red-600', totalProfitPerTon < 0);
-        totalProfitPerTonEl.classList.toggle('text-green-600', totalProfitPerTon >= 0);
+        document.getElementById('summary-actual-profit-per-ton').textContent = formatCurrencyPerTon(actualProfitPerTon);
+        document.getElementById('summary-projected-profit-per-ton').textContent = formatCurrencyPerTon(projectedProfitPerTon);
+        document.getElementById('summary-total-profit-per-ton').textContent = formatCurrencyPerTon(totalProfitPerTon);
 
         renderDetailedReport();
     }
@@ -817,6 +875,8 @@
         grainSelect.addEventListener('change', renderDashboard);
         document.getElementById('projected-sell-price').addEventListener('input', renderDashboard);
         document.getElementById('projected-buy-price').addEventListener('input', renderDashboard);
+        document.getElementById('inventory-qty').addEventListener('input', renderDashboard);
+        document.getElementById('inventory-price').addEventListener('input', renderDashboard);
         
         // Tab'ų valdymas
         const summaryTab = document.getElementById('summary-tab');
