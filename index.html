@@ -367,7 +367,7 @@
             <div id="reports-panel" class="hidden">
                 <div class="bg-white p-6 rounded-xl shadow-lg">
                     <h2 class="text-2xl font-bold text-gray-800 mb-6">Detali Ataskaita pagal Mėnesius</h2>
-                    <div id="reports-content" class="space-y-4 max-h-[80vh] overflow-y-auto pr-4">
+                    <div id="reports-content">
                         <!-- Detalių ataskaitų turinys bus generuojamas čia -->
                     </div>
                 </div>
@@ -506,9 +506,7 @@
         }
 
         const monthlyData = {};
-        const fixedRatio = 0.4;
-        const priceAdjustment = 2;
-
+        
         transactions.forEach(t => {
             const month = t.date.substring(0, 7); // YYYY-MM
             if (!monthlyData[month]) {
@@ -531,32 +529,13 @@
 
         const reportData = Object.keys(monthlyData).sort().map(month => {
             const monthInfo = monthlyData[month];
-            
-            const p_tonnes = monthInfo.purchase.tonnes;
-            const p_value = monthInfo.purchase.value;
-            const p_avg_price = p_tonnes > 0 ? p_value / p_tonnes : 0;
-            const p_fixed_tonnes = p_tonnes * fixedRatio;
-            const p_unfixed_tonnes = p_tonnes * (1 - fixedRatio);
-            const p_fixed_price = p_avg_price - priceAdjustment;
-            const p_fixed_value = p_fixed_tonnes * p_fixed_price;
-            const p_unfixed_value = p_value - p_fixed_value;
-
-            const s_tonnes = monthInfo.sale.tonnes;
-            const s_value = monthInfo.sale.value;
-            const s_avg_price = s_tonnes > 0 ? s_value / s_tonnes : 0;
-            const s_fixed_tonnes = s_tonnes * fixedRatio;
-            const s_unfixed_tonnes = s_tonnes * (1-fixedRatio);
-            const s_fixed_price = s_avg_price - priceAdjustment;
-            const s_fixed_value = s_fixed_tonnes * s_fixed_price;
-            const s_unfixed_value = s_value - s_fixed_value;
-
-            const cogs = s_tonnes * overallAvgBuyPrice;
-            const profit = s_value - cogs;
+            const cogs = monthInfo.sale.tonnes * overallAvgBuyPrice;
+            const profit = monthInfo.sale.value - cogs;
 
             return {
                 month: month.replace('-', '.'),
-                purchase: { total_t: p_tonnes, total_v: p_value, fixed_t: p_fixed_tonnes, fixed_v: p_fixed_value, unfixed_t: p_unfixed_tonnes, unfixed_v: p_unfixed_value, },
-                sale: { total_t: s_tonnes, total_v: s_value, fixed_t: s_fixed_tonnes, fixed_v: s_fixed_value, unfixed_t: s_unfixed_tonnes, unfixed_v: s_unfixed_value, },
+                purchase: { total_t: monthInfo.purchase.tonnes, total_v: monthInfo.purchase.value },
+                sale: { total_t: monthInfo.sale.tonnes, total_v: monthInfo.sale.value },
                 profit: profit
             };
         });
@@ -575,70 +554,76 @@
 
         let grandTotal = { purchase_t: 0, purchase_v: 0, sale_t: 0, sale_v: 0, profit: 0 };
 
-        const html = reportData.map(month => {
+        const tableRows = reportData.map((month, index) => {
             grandTotal.purchase_t += month.purchase.total_t;
             grandTotal.purchase_v += month.purchase.total_v;
             grandTotal.sale_t += month.sale.total_t;
             grandTotal.sale_v += month.sale.total_v;
             grandTotal.profit += month.profit;
             
+            const p_avg_price = month.purchase.total_t > 0 ? month.purchase.total_v / month.purchase.total_t : 0;
+            const s_avg_price = month.sale.total_t > 0 ? month.sale.total_v / month.sale.total_t : 0;
             const profitClass = month.profit >= 0 ? 'text-green-600' : 'text-red-600';
+            const rowClass = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
 
             return `
-            <div class="p-4 border rounded-lg bg-gray-50">
-                <h3 class="text-lg font-bold text-gray-800 mb-4">${month.month}</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                        <h4 class="font-semibold mb-2 border-b pb-1">Pirkimai</h4>
-                        <div class="text-sm space-y-2">
-                            <div class="flex justify-between"><span>Fiksuota:</span> <span class="font-mono">${formatTonnes(month.purchase.fixed_t)} / ${formatCurrency(month.purchase.fixed_v)}</span></div>
-                            <div class="flex justify-between"><span>Nefiksuota:</span> <span class="font-mono">${formatTonnes(month.purchase.unfixed_t)} / ${formatCurrency(month.purchase.unfixed_v)}</span></div>
-                            <div class="flex justify-between font-bold border-t pt-1 mt-1"><span>Viso:</span> <span class="font-mono">${formatTonnes(month.purchase.total_t)} / ${formatCurrency(month.purchase.total_v)}</span></div>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 class="font-semibold mb-2 border-b pb-1">Pardavimai</h4>
-                         <div class="text-sm space-y-2">
-                            <div class="flex justify-between"><span>Fiksuota:</span> <span class="font-mono">${formatTonnes(month.sale.fixed_t)} / ${formatCurrency(month.sale.fixed_v)}</span></div>
-                            <div class="flex justify-between"><span>Nefiksuota:</span> <span class="font-mono">${formatTonnes(month.sale.unfixed_t)} / ${formatCurrency(month.sale.unfixed_v)}</span></div>
-                            <div class="flex justify-between font-bold border-t pt-1 mt-1"><span>Viso:</span> <span class="font-mono">${formatTonnes(month.sale.total_t)} / ${formatCurrency(month.sale.total_v)}</span></div>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 class="font-semibold mb-2 border-b pb-1">Pelnas (Faktinis)</h4>
-                        <div class="text-center mt-4">
-                            <span class="text-2xl font-bold ${profitClass} font-mono">${formatCurrency(month.profit)}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
+                <tr class="border-b border-gray-200 hover:bg-gray-100 ${rowClass}">
+                    <td class="py-3 px-6 text-left whitespace-nowrap font-medium border-r">${month.month}</td>
+                    <td class="py-3 px-6 text-right border-r font-mono">${formatTonnes(month.purchase.total_t)}</td>
+                    <td class="py-3 px-6 text-right border-r font-mono">${formatCurrencyPerTon(p_avg_price)}</td>
+                    <td class="py-3 px-6 text-right border-r font-mono">${formatCurrency(month.purchase.total_v)}</td>
+                    <td class="py-3 px-6 text-right border-r font-mono">${formatTonnes(month.sale.total_t)}</td>
+                    <td class="py-3 px-6 text-right border-r font-mono">${formatCurrencyPerTon(s_avg_price)}</td>
+                    <td class="py-3 px-6 text-right border-r font-mono">${formatCurrency(month.sale.total_v)}</td>
+                    <td class="py-3 px-6 text-right font-mono font-semibold ${profitClass}">${formatCurrency(month.profit)}</td>
+                </tr>`;
         }).join('');
 
+        const grandTotalAvgPurchasePrice = grandTotal.purchase_t > 0 ? grandTotal.purchase_v / grandTotal.purchase_t : 0;
+        const grandTotalAvgSalePrice = grandTotal.sale_t > 0 ? grandTotal.sale_v / grandTotal.sale_t : 0;
         const grandTotalProfitClass = grandTotal.profit >= 0 ? 'text-green-700' : 'text-red-700';
 
-        const grandTotalHtml = `
-        <div class="mt-8 p-6 border-t-4 border-amber-800 bg-amber-50 rounded-lg">
-            <h3 class="text-xl font-bold text-amber-900 mb-4">Bendra Suma</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-base">
-                <div>
-                    <h4 class="font-semibold mb-2 border-b border-amber-700 text-amber-800 pb-1">Pirkimai</h4>
-                    <div class="flex justify-between font-bold"><span>Viso:</span> <span class="font-mono">${formatTonnes(grandTotal.purchase_t)} / ${formatCurrency(grandTotal.purchase_v)}</span></div>
-                </div>
-                <div>
-                    <h4 class="font-semibold mb-2 border-b border-amber-700 text-amber-800 pb-1">Pardavimai</h4>
-                    <div class="flex justify-between font-bold"><span>Viso:</span> <span class="font-mono">${formatTonnes(grandTotal.sale_t)} / ${formatCurrency(grandTotal.sale_v)}</span></div>
-                </div>
-                <div>
-                    <h4 class="font-semibold mb-2 border-b border-amber-700 text-amber-800 pb-1">Pelnas (Faktinis)</h4>
-                    <div class="text-center mt-2">
-                        <span class="text-3xl font-bold ${grandTotalProfitClass} font-mono">${formatCurrency(grandTotal.profit)}</span>
-                    </div>
-                </div>
-            </div>
-        </div>`;
+        const tableHtml = `
+        <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-md">
+            <table class="min-w-full bg-white">
+                <thead class="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+                    <tr>
+                        <th rowspan="2" class="py-3 px-6 text-left border-b border-r">Mėnuo</th>
+                        <th colspan="3" class="py-3 px-6 text-center border-b border-r">Pirkimai</th>
+                        <th colspan="3" class="py-3 px-6 text-center border-b border-r">Pardavimai</th>
+                        <th rowspan="2" class="py-3 px-6 text-right border-b">Pelnas (Faktinis)</th>
+                    </tr>
+                    <tr>
+                        <th class="py-3 px-6 text-right border-b border-r">Kiekis, t</th>
+                        <th class="py-3 px-6 text-right border-b border-r">Vid. Kaina, €/t</th>
+                        <th class="py-3 px-6 text-right border-b border-r">Suma, €</th>
+                        <th class="py-3 px-6 text-right border-b border-r">Kiekis, t</th>
+                        <th class="py-3 px-6 text-right border-b border-r">Vid. Kaina, €/t</th>
+                        <th class="py-3 px-6 text-right border-b border-r">Suma, €</th>
+                    </tr>
+                </thead>
+                <tbody class="text-gray-700 text-sm font-light">
+                    ${tableRows}
+                </tbody>
+                <tfoot class="bg-gray-200 text-gray-800 text-sm font-bold">
+                    <tr class="border-t-2 border-gray-300">
+                        <td class="py-4 px-6 text-left border-r">Bendra Suma</td>
+                        <td class="py-4 px-6 text-right border-r font-mono">${formatTonnes(grandTotal.purchase_t)}</td>
+                        <td class="py-4 px-6 text-right border-r font-mono">${formatCurrencyPerTon(grandTotalAvgPurchasePrice)}</td>
+                        <td class="py-4 px-6 text-right border-r font-mono">${formatCurrency(grandTotal.purchase_v)}</td>
+                        <td class="py-4 px-6 text-right border-r font-mono">${formatTonnes(grandTotal.sale_t)}</td>
+                        <td class="py-4 px-6 text-right border-r font-mono">${formatCurrencyPerTon(grandTotalAvgSalePrice)}</td>
+                        <td class="py-4 px-6 text-right border-r font-mono">${formatCurrency(grandTotal.sale_v)}</td>
+                        <td class="py-4 px-6 text-right font-mono text-base ${grandTotalProfitClass}">${formatCurrency(grandTotal.profit)}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        `;
 
-        container.innerHTML = html + grandTotalHtml;
+        container.innerHTML = tableHtml;
     }
+
 
     function renderDashboard() {
         state.selectedGrain = document.getElementById('grain-select').value;
