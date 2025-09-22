@@ -561,13 +561,10 @@
             }
         });
         
-        const inventoryQty = parseFloat(document.getElementById('inventory-qty').value.replace(',', '.')) || 0;
-        let runningBalance = inventoryQty;
         const reportData = Object.keys(monthlyData).sort().map(month => {
             const monthInfo = monthlyData[month];
             const profit = monthInfo.sale.value - monthInfo.purchase.value;
             const monthlyChange = monthInfo.purchase.tonnes - monthInfo.sale.tonnes;
-            runningBalance += monthlyChange;
 
             return {
                 month: month.replace('-', '.'),
@@ -575,7 +572,6 @@
                 sale: { total_t: monthInfo.sale.tonnes, total_v: monthInfo.sale.value },
                 profit: profit,
                 monthlyChange: monthlyChange,
-                balance: runningBalance
             };
         });
         
@@ -586,12 +582,32 @@
         const reportData = getDetailedMonthlyData();
         const container = document.getElementById('reports-content');
         
-        if (reportData.length === 0) {
+        const inventoryQty = parseFloat(document.getElementById('inventory-qty').value.replace(',', '.')) || 0;
+        const inventoryPrice = parseFloat(document.getElementById('inventory-price').value.replace(',', '.')) || 0;
+        const inventoryValue = inventoryQty * inventoryPrice;
+
+        if (reportData.length === 0 && inventoryQty === 0) {
             container.innerHTML = `<p class="text-center text-gray-500 py-16">Nėra duomenų ataskaitai pagal pasirinktus filtrus.</p>`;
             return;
         }
 
         let grandTotal = { purchase_t: 0, purchase_v: 0, sale_t: 0, sale_v: 0, profit: 0 };
+        let runningBalance = inventoryQty;
+
+        const inventoryRowHtml = `
+                <tr class="border-b border-gray-200 bg-blue-50">
+                    <td class="py-3 px-4 text-left whitespace-nowrap font-bold text-blue-800">Likutis sandėlyje (pradinis)</td>
+                    <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatTonnes(inventoryQty)}</td>
+                    <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatCurrencyPerTon(inventoryPrice)}</td>
+                    <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatCurrency(inventoryValue)}</td>
+                    <td class="py-3 px-4 bg-green-50"></td>
+                    <td class="py-3 px-4 bg-green-50"></td>
+                    <td class="py-3 px-4 bg-green-50"></td>
+                    <td class="py-3 px-4 bg-white"></td>
+                    <td class="py-3 px-4 text-right font-mono font-semibold bg-white">${formatTonnes(inventoryQty)}</td>
+                    <td class="py-3 px-4 bg-white"></td>
+                </tr>`;
+
 
         const tableRows = reportData.map((month) => {
             grandTotal.purchase_t += month.purchase.total_t;
@@ -600,11 +616,13 @@
             grandTotal.sale_v += month.sale.total_v;
             grandTotal.profit += month.profit;
             
+            runningBalance += month.monthlyChange;
+            
             const p_avg_price = month.purchase.total_t > 0 ? month.purchase.total_v / month.purchase.total_t : 0;
             const s_avg_price = month.sale.total_t > 0 ? month.sale.total_v / month.sale.total_t : 0;
             const profitClass = month.profit >= 0 ? 'text-green-600' : 'text-red-600';
             const monthlyChangeClass = month.monthlyChange >= 0 ? 'text-green-600' : 'text-red-600';
-            const balanceClass = month.balance < 0 ? 'text-red-600' : 'text-gray-800';
+            const balanceClass = runningBalance < 0 ? 'text-red-600' : 'text-gray-800';
 
             return `
                 <tr class="border-b border-gray-200">
@@ -616,12 +634,11 @@
                     <td class="py-3 px-4 text-right font-mono bg-green-50">${formatCurrencyPerTon(s_avg_price)}</td>
                     <td class="py-3 px-4 text-right font-mono bg-green-50">${formatCurrency(month.sale.total_v)}</td>
                     <td class="py-3 px-4 text-right font-mono font-semibold ${monthlyChangeClass} bg-white">${formatTonnesWithSign(month.monthlyChange)}</td>
-                    <td class="py-3 px-4 text-right font-mono font-semibold ${balanceClass} bg-white">${formatTonnes(month.balance)}</td>
+                    <td class="py-3 px-4 text-right font-mono font-semibold ${balanceClass} bg-white">${formatTonnes(runningBalance)}</td>
                     <td class="py-3 px-4 text-right font-mono font-semibold ${profitClass} bg-white">${formatCurrency(month.profit, true)}</td>
                 </tr>`;
         }).join('');
         
-        const inventoryQty = parseFloat(document.getElementById('inventory-qty').value.replace(',', '.')) || 0;
         const grandTotalAvgPurchasePrice = grandTotal.purchase_t > 0 ? grandTotal.purchase_v / grandTotal.purchase_t : 0;
         const grandTotalAvgSalePrice = grandTotal.sale_t > 0 ? grandTotal.sale_v / grandTotal.sale_t : 0;
         const grandTotalProfitClass = grandTotal.profit >= 0 ? 'text-green-700' : 'text-red-700';
@@ -650,6 +667,7 @@
                     </tr>
                 </thead>
                 <tbody class="text-gray-700 font-light">
+                    ${inventoryRowHtml}
                     ${tableRows}
                 </tbody>
                 <tfoot class="text-gray-800 font-bold">
@@ -883,6 +901,22 @@
         allOption.textContent = 'Visi';
         grainSelect.appendChild(allOption);
         grainSelect.value = state.selectedGrain;
+
+        // Read inventory data from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const qtyFromUrl = urlParams.get('inventoryQty');
+        const priceFromUrl = urlParams.get('inventoryPrice');
+
+        const inventoryQtyInput = document.getElementById('inventory-qty');
+        const inventoryPriceInput = document.getElementById('inventory-price');
+
+        if (qtyFromUrl) {
+            inventoryQtyInput.value = qtyFromUrl;
+        }
+        if (priceFromUrl) {
+            inventoryPriceInput.value = priceFromUrl;
+        }
+
 
         const now = new Date();
         document.getElementById('timestamp').textContent = `Duomenys atnaujinti: ${now.toISOString().slice(0, 10)} ${now.toTimeString().slice(0, 5)}`;
