@@ -594,7 +594,7 @@
         return reportData;
     }
 
-    function renderDetailedReport() {
+    function renderDetailedReport(totalAvgProfitPerTon) {
         const reportData = getDetailedMonthlyData();
         const container = document.getElementById('reports-content');
         
@@ -730,6 +730,13 @@
                 </tr>`;
         }
 
+        const totalAvgProfitClass = totalAvgProfitPerTon >= 0 ? 'text-green-700' : 'text-red-700';
+        const finalAvgProfitRow = `
+            <tr class="border-t-2 border-gray-400 bg-gray-200">
+                <td colspan="9" class="py-3 px-4 text-right font-bold">Bendras vidutinis pelnas / nuostolis (€/t)</td>
+                <td class="py-3 px-4 text-right font-mono font-bold ${totalAvgProfitClass}">${formatCurrencyPerTon(totalAvgProfitPerTon, true)}</td>
+            </tr>
+        `;
 
         const tableHtml = `
         <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-md">
@@ -770,6 +777,7 @@
                         <td class="py-4 px-4 text-right font-mono text-base ${grandTotalProfitClass} bg-gray-200">${formatCurrency(grandTotal.profit, true, true)}</td>
                     </tr>
                     ${forecastRowHtml}
+                    ${finalAvgProfitRow}
                 </tfoot>
             </table>
         </div>
@@ -982,8 +990,7 @@
             totalProfitPerTonContainer.classList.toggle('text-green-400', totalProfitPerTon >= 0);
         }
 
-
-        renderDetailedReport();
+        renderDetailedReport(totalProfitPerTon);
     }
     
     function initialize() {
