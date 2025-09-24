@@ -141,6 +141,31 @@
                            </div>
                         </div>
                     </div>
+
+                    <!-- Bendra Prognozė (PERKELTA) -->
+                    <div class="p-6 main-card rounded-xl bg-amber-900 text-white">
+                        <h3 class="font-semibold text-amber-100 mb-4">Bendra Prognozė (Faktas + Prognozė)</h3>
+                        <div class="summary-row border-amber-700">
+                            <span class="summary-label text-amber-200">Faktinis pelnas / nuostolis</span>
+                            <span id="total-summary-actual-profit" class="summary-value text-amber-100">€0</span>
+                        </div>
+                        <div class="summary-row border-amber-700" id="total-surplus-row">
+                            <span class="summary-label text-amber-200">Prognozuojamas pelnas / nuostolis (neparduotam kiekui)</span>
+                            <span id="total-summary-surplus-profit" class="summary-value text-amber-100">€0</span>
+                        </div>
+                        <div class="summary-row border-amber-700" id="total-deficit-row">
+                            <span class="summary-label text-amber-200">Prognozuojamas pelnas / nuostolis (reikiamo kiekio)</span>
+                            <span id="total-summary-deficit-profit" class="summary-value text-amber-100">€0</span>
+                        </div>
+                        <div class="summary-row summary-total border-amber-600">
+                            <span class="summary-label text-lg text-amber-100">Bendras Prognozuojamas Pelnas / Nuostolis</span>
+                            <span id="total-projected-profit" class="summary-value text-2xl">€0</span>
+                        </div>
+                         <div class="summary-row summary-total border-t-2 border-amber-500 pt-4 mt-4">
+                            <span class="summary-label text-lg text-amber-100 font-bold">Vidutinis bendras pelnas / nuostolis (€/t)</span>
+                            <span id="summary-total-profit-per-ton" class="summary-value text-xl font-bold">€0,00</span>
+                        </div>
+                    </div>
             
                     <!-- Pirkimai -->
                     <div class="p-6 main-card rounded-xl">
@@ -283,9 +308,21 @@
                                     <span class="summary-label">Savikaina (parduota)</span>
                                     <span id="summary-actual-cogs" class="summary-value text-red-600">- €0</span>
                                 </div>
-                                <div class="summary-row summary-total">
+                                <div class="summary-row">
                                     <span class="summary-label">Pelnas / Nuostolis (faktinis)</span>
                                     <span id="summary-actual-profit" class="summary-value text-lg">€0</span>
+                                </div>
+                                <div class="summary-row pt-4 mt-4 border-t-2 border-gray-200">
+                                    <span class="summary-label">Vidutinė pirkimo kaina (€/t)</span>
+                                    <span id="summary-avg-buy-price" class="summary-value text-lg">€0,00</span>
+                                </div>
+                                 <div class="summary-row">
+                                    <span class="summary-label">Vidutinė faktinių pardavimų kaina (€/t)</span>
+                                    <span id="summary-avg-actual-sell-price" class="summary-value text-lg">€0,00</span>
+                                </div>
+                                <div class="summary-row summary-total">
+                                    <span class="summary-label font-semibold">Vidutinis faktinis pelnas / nuostolis (€/t)</span>
+                                    <span id="summary-actual-profit-per-ton" class="summary-value text-lg font-semibold">€0,00</span>
                                 </div>
                             </div>
                             <div id="surplus-projection-block" class="p-4 bg-gray-50 rounded-lg border">
@@ -313,6 +350,10 @@
                                     <span class="summary-label">Pelnas / Nuostolis (prognozuojamas)</span>
                                     <span id="projected-profit" class="summary-value text-lg">€0</span>
                                 </div>
+                                <div class="summary-row summary-total">
+                                    <span class="summary-label font-semibold">Vidutinis prognozuojamas pelnas / nuostolis (€/t)</span>
+                                    <span id="surplus-projected-profit-per-ton" class="summary-value text-lg font-semibold">€0,00</span>
+                                </div>
                             </div>
                             <div id="deficit-projection-block" class="p-4 bg-gray-50 rounded-lg border">
                                 <h3 class="font-semibold text-gray-700 mb-4">Prognozė (trūkstamam kiekiui)</h3>
@@ -339,53 +380,10 @@
                                     <span class="summary-label">Pelnas / Nuostolis (prognozuojamas)</span>
                                     <span id="deficit-profit" class="summary-value text-lg">€0</span>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-            
-                    <!-- Apibendrinimas -->
-                    <div class="space-y-8">
-                        <h2 class="section-title mb-4">Apibendrinimas</h2>
-                        <div class="p-6 main-card rounded-xl bg-amber-900 text-white">
-                            <h3 class="font-semibold text-amber-100 mb-4">1. Bendra Prognozė (Faktas + Prognozė)</h3>
-                            <div class="summary-row border-amber-700">
-                                <span class="summary-label text-amber-200">Faktinis pelnas / nuostolis</span>
-                                <span id="total-summary-actual-profit" class="summary-value text-amber-100">€0</span>
-                            </div>
-                            <div class="summary-row border-amber-700" id="total-surplus-row">
-                                <span class="summary-label text-amber-200">Prognozuojamas pelnas / nuostolis (neparduotam kiekui)</span>
-                                <span id="total-summary-surplus-profit" class="summary-value text-amber-100">€0</span>
-                            </div>
-                            <div class="summary-row border-amber-700" id="total-deficit-row">
-                                <span class="summary-label text-amber-200">Prognozuojamas pelnas / nuostolis (reikiamo kiekio)</span>
-                                <span id="total-summary-deficit-profit" class="summary-value text-amber-100">€0</span>
-                            </div>
-                            <div class="summary-row summary-total border-amber-600">
-                                <span class="summary-label text-lg text-amber-100">Bendras Prognozuojamas Pelnas / Nuostolis</span>
-                                <span id="total-projected-profit" class="summary-value text-2xl">€0</span>
-                            </div>
-                        </div>
-                        <div class="p-6 main-card rounded-xl">
-                            <h3 class="font-semibold text-gray-700 mb-4">2. Prognozės Vidurkiai</h3>
-                            <div class="summary-row">
-                                <span class="summary-label">Vidutinė pirkimo kaina (€/t)</span>
-                                <span id="summary-avg-buy-price" class="summary-value text-lg">€0,00</span>
-                            </div>
-                             <div class="summary-row">
-                                <span class="summary-label">Vidutinė faktinių pardavimų kaina (€/t)</span>
-                                <span id="summary-avg-actual-sell-price" class="summary-value text-lg">€0,00</span>
-                            </div>
-                            <div class="summary-row">
-                                <span class="summary-label font-semibold">Vidutinis faktinis pelnas / nuostolis (€/t)</span>
-                                <span id="summary-actual-profit-per-ton" class="summary-value text-lg font-semibold">€0,00</span>
-                            </div>
-                             <div class="summary-row">
-                                <span class="summary-label font-semibold">Vidutinis prognozuojamas pelnas / nuostolis (€/t)</span>
-                                <span id="summary-projected-profit-per-ton" class="summary-value text-lg font-semibold">€0,00</span>
-                            </div>
-                            <div class="summary-row summary-total">
-                                <span class="summary-label font-bold">Vidutinis bendras pelnas / nuostolis (€/t)</span>
-                                <span id="summary-total-profit-per-ton" class="summary-value text-xl font-bold">€0,00</span>
+                                <div class="summary-row summary-total">
+                                    <span class="summary-label font-semibold">Vidutinis prognozuojamas pelnas / nuostolis (€/t)</span>
+                                    <span id="deficit-projected-profit-per-ton" class="summary-value text-lg font-semibold">€0,00</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -909,6 +907,12 @@
             projectedProfitEl.textContent = formatCurrency(projectedProfit);
             projectedProfitEl.classList.toggle('text-red-600', projectedProfit < 0);
             projectedProfitEl.classList.toggle('text-green-600', projectedProfit >= 0);
+
+            const projectedProfitPerTon = totalOpenPosition !== 0 ? projectedProfit / totalOpenPosition : 0;
+            const surplusProjectedProfitPerTonEl = document.getElementById('surplus-projected-profit-per-ton');
+            surplusProjectedProfitPerTonEl.textContent = formatCurrencyPerTon(projectedProfitPerTon);
+            surplusProjectedProfitPerTonEl.classList.toggle('text-red-600', projectedProfitPerTon < 0);
+            surplusProjectedProfitPerTonEl.classList.toggle('text-green-600', projectedProfitPerTon >= 0);
         } else {
             surplusBlock.classList.add('inactive-block');
             deficitBlock.classList.remove('inactive-block');
@@ -925,6 +929,12 @@
             deficitProfitEl.textContent = formatCurrency(projectedProfit);
             deficitProfitEl.classList.toggle('text-red-600', projectedProfit < 0);
             deficitProfitEl.classList.toggle('text-green-600', projectedProfit >= 0);
+
+            const projectedProfitPerTon = totalOpenPosition !== 0 ? projectedProfit / Math.abs(totalOpenPosition) : 0;
+            const deficitProjectedProfitPerTonEl = document.getElementById('deficit-projected-profit-per-ton');
+            deficitProjectedProfitPerTonEl.textContent = formatCurrencyPerTon(projectedProfitPerTon);
+            deficitProjectedProfitPerTonEl.classList.toggle('text-red-600', projectedProfitPerTon < 0);
+            deficitProjectedProfitPerTonEl.classList.toggle('text-green-600', projectedProfitPerTon >= 0);
         }
         
         // Populate final summaries
@@ -952,7 +962,7 @@
         // Populate averages
         const overallAvgBuyPrice = (contractData.totalPurchasedTonnes + inventoryQty) > 0 ? (contractData.totalPurchaseValue + inventoryTotalValue) / (contractData.totalPurchasedTonnes + inventoryQty) : 0;
         const actualProfitPerTon = totalSoldTonnes > 0 ? actualProfit / totalSoldTonnes : 0;
-        const projectedProfitPerTon = totalOpenPosition !== 0 ? projectedProfit / Math.abs(totalOpenPosition) : 0;
+        
         const totalPurchasedAndInventory = contractData.totalPurchasedTonnes + inventoryQty;
         const totalProfitPerTon = totalPurchasedAndInventory > 0 ? totalProjectedProfit / totalPurchasedAndInventory : 0;
         
@@ -963,16 +973,15 @@
         summaryActualProfitPerTonEl.textContent = formatCurrencyPerTon(actualProfitPerTon);
         summaryActualProfitPerTonEl.classList.toggle('text-red-600', actualProfitPerTon < 0);
         summaryActualProfitPerTonEl.classList.toggle('text-green-600', actualProfitPerTon >= 0);
-        
-        const summaryProjectedProfitPerTonEl = document.getElementById('summary-projected-profit-per-ton');
-        summaryProjectedProfitPerTonEl.textContent = formatCurrencyPerTon(projectedProfitPerTon);
-        summaryProjectedProfitPerTonEl.classList.toggle('text-red-600', projectedProfitPerTon < 0);
-        summaryProjectedProfitPerTonEl.classList.toggle('text-green-600', projectedProfitPerTon >= 0);
 
         const totalProfitPerTonEl = document.getElementById('summary-total-profit-per-ton');
         totalProfitPerTonEl.textContent = formatCurrencyPerTon(totalProfitPerTon);
-        totalProfitPerTonEl.classList.toggle('text-red-600', totalProfitPerTon < 0);
-        totalProfitPerTonEl.classList.toggle('text-green-600', totalProfitPerTon >= 0);
+        const totalProfitPerTonContainer = totalProfitPerTonEl.closest('.summary-row');
+        if (totalProfitPerTonContainer) {
+            totalProfitPerTonContainer.classList.toggle('text-red-400', totalProfitPerTon < 0);
+            totalProfitPerTonContainer.classList.toggle('text-green-400', totalProfitPerTon >= 0);
+        }
+
 
         renderDetailedReport();
     }
