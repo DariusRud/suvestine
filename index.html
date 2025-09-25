@@ -1036,6 +1036,7 @@
         const params = new URLSearchParams({
             static: true,
             grain: selectedGrain,
+            grainText: selectedGrainText,
             period: document.getElementById('period-select').value,
             startDate: document.getElementById('start-date').value,
             endDate: document.getElementById('end-date').value,
@@ -1161,6 +1162,14 @@
             staticTitle.textContent = 'IŠSAUGOTOS ATASKAITOS PERŽIŪRA (STATINĖ VERSIJA)';
             const header = document.querySelector('header');
             header.parentNode.insertBefore(staticTitle, header.nextSibling);
+
+            const grainText = urlParams.get('grainText');
+            if (grainText) {
+                const grainDisplay = document.createElement('h3');
+                grainDisplay.className = 'text-center text-2xl font-semibold text-gray-700 mb-8';
+                grainDisplay.innerHTML = `<span class="font-normal">Kultūra:</span> <span class="text-amber-800">${decodeURIComponent(grainText)}</span>`;
+                staticTitle.parentNode.insertBefore(grainDisplay, staticTitle.nextSibling);
+            }
 
             return; // Stop further initialization for static mode
         }
