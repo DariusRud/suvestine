@@ -64,9 +64,20 @@
             color: #92400e; /* amber-800 */
             border-color: #92400e; /* amber-800 */
         }
+        .static-mode-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.05);
+            z-index: 999;
+        }
     </style>
 </head>
 <body class="p-4 md:p-8">
+    <div id="static-mode-overlay"></div>
 
     <div id="toast-message" class="fixed top-5 right-5 bg-green-600 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transition-opacity duration-300 z-50">
         Ataskaita sėkmingai išsaugota!
@@ -784,7 +795,7 @@
                     </tr>
                 </thead>
                 <tbody class="text-gray-700 font-light">
-                    ${inventoryRowHtml}
+                    ${(inventoryQty > 0 || reportData.length > 0) ? inventoryRowHtml : ''}
                     ${tableRows}
                 </tbody>
                 <tfoot class="text-gray-800 font-bold">
@@ -1095,55 +1106,9 @@
 
     function initialize() {
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('static') === 'true') {
-            document.addEventListener('DOMContentLoaded', () => {
-                const grainSelect = document.getElementById('grain-select');
-                for (const [key, value] of Object.entries(allData)) {
-                    const option = document.createElement('option');
-                    option.value = key;
-                    option.textContent = `${key.toUpperCase()} ${value.name}`;
-                    grainSelect.appendChild(option);
-                }
-                 const allOption = document.createElement('option');
-                allOption.value = 'visi';
-                allOption.textContent = 'Visi';
-                grainSelect.appendChild(allOption);
+        const isStatic = urlParams.get('static') === 'true';
 
-
-                const setVal = (id, param) => {
-                    const el = document.getElementById(id);
-                    if (el) el.value = urlParams.get(param) || '';
-                };
-                
-                setVal('grain-select', 'grain');
-                setVal('period-select', 'period');
-                setVal('start-date', 'startDate');
-                setVal('end-date', 'endDate');
-                setVal('market-date', 'marketDate');
-                setVal('matif-rapeseed', 'matifRapeseed');
-                setVal('matif-wheat', 'matifWheat');
-                setVal('fob-malt', 'fobMalt');
-                setVal('inventory-qty', 'inventoryQty');
-                setVal('inventory-price', 'inventoryPrice');
-                setVal('projected-sell-price', 'projectedSellPrice');
-                setVal('projected-buy-price', 'projectedBuyPrice');
-                
-                if (document.getElementById('period-select').value === 'pasirinkti') {
-                    document.getElementById('date-range-picker').classList.remove('hidden');
-                }
-
-                renderDashboard();
-
-                document.querySelectorAll('input, select, button').forEach(el => {
-                    el.disabled = true;
-                });
-                document.getElementById('tabs-nav').style.display = 'none';
-                document.getElementById('save-button-container').style.display = 'none';
-                document.getElementById('filters-box').style.display = 'none';
-            });
-            return;
-        }
-
+        // --- Populate Grain Select Dropdown (always) ---
         const grainSelect = document.getElementById('grain-select');
         for (const [key, value] of Object.entries(allData)) {
             const option = document.createElement('option');
@@ -1155,8 +1120,49 @@
         allOption.value = 'visi';
         allOption.textContent = 'Visi';
         grainSelect.appendChild(allOption);
-        grainSelect.value = state.selectedGrain;
+        grainSelect.value = state.selectedGrain; // Set default for dynamic mode
 
+        // --- Static Mode (View-only from URL) ---
+        if (isStatic) {
+            const setVal = (id, param) => {
+                const el = document.getElementById(id);
+                if (el) el.value = urlParams.get(param) || (el.type === 'text' ? '0' : ''); // Set to 0 or empty for static view
+            };
+            
+            setVal('grain-select', 'grain');
+            setVal('period-select', 'period');
+            setVal('start-date', 'startDate');
+            setVal('end-date', 'endDate');
+            setVal('market-date', 'marketDate');
+            setVal('matif-rapeseed', 'matifRapeseed');
+            setVal('matif-wheat', 'matifWheat');
+            setVal('fob-malt', 'fobMalt');
+            setVal('inventory-qty', 'inventoryQty');
+            setVal('inventory-price', 'inventoryPrice');
+            setVal('projected-sell-price', 'projectedSellPrice');
+            setVal('projected-buy-price', 'projectedBuyPrice');
+            
+            if (document.getElementById('period-select').value === 'pasirinkti') {
+                document.getElementById('date-range-picker').classList.remove('hidden');
+            }
+
+            renderDashboard();
+
+            // Disable all interactions
+            document.getElementById('static-mode-overlay').style.display = 'block';
+            document.getElementById('tabs-nav').style.display = 'none';
+            document.getElementById('save-button-container').style.display = 'none';
+            document.getElementById('filters-box').style.display = 'none';
+            const staticTitle = document.createElement('h2');
+            staticTitle.className = 'text-center text-xl font-bold text-red-700 mb-6';
+            staticTitle.textContent = 'IŠSAUGOTOS ATASKAITOS PERŽIŪRA (STATINĖ VERSIJA)';
+            const header = document.querySelector('header');
+            header.parentNode.insertBefore(staticTitle, header.nextSibling);
+
+            return; // Stop further initialization for static mode
+        }
+
+        // --- Dynamic Mode (Interactive) ---
         const now = new Date();
         document.getElementById('timestamp').textContent = `Duomenys atnaujinti: ${now.toISOString().slice(0, 10)} ${now.toTimeString().slice(0, 5)}`;
         
@@ -1165,56 +1171,53 @@
         
         const periodSelect = document.getElementById('period-select');
         const dateRangePicker = document.getElementById('date-range-picker');
-        const startDateInput = document.getElementById('start-date');
-        const endDateInput = document.getElementById('end-date');
 
-        periodSelect.addEventListener('change', (e) => {
-            state.selectedPeriod = e.target.value;
-            dateRangePicker.classList.toggle('hidden', e.target.value !== 'pasirinkti');
-            renderDashboard();
-        });
-        
-        startDateInput.addEventListener('change', renderDashboard);
-        endDateInput.addEventListener('change', renderDashboard);
-        grainSelect.addEventListener('change', renderDashboard);
-        document.getElementById('projected-sell-price').addEventListener('input', renderDashboard);
-        document.getElementById('projected-buy-price').addEventListener('input', renderDashboard);
-        document.getElementById('inventory-qty').addEventListener('input', renderDashboard);
-        document.getElementById('inventory-price').addEventListener('input', renderDashboard);
-        document.getElementById('save-report-btn').addEventListener('click', saveReport);
-        
-        const summaryTab = document.getElementById('summary-tab');
-        const detailsTab = document.getElementById('details-tab');
-        const historyTab = document.getElementById('history-tab');
-        const summaryPanel = document.getElementById('summary-panel');
-        const reportsPanel = document.getElementById('reports-panel');
-        const historyPanel = document.getElementById('history-panel');
-        const filtersBox = document.getElementById('filters-box');
-        const saveButtonContainer = document.getElementById('save-button-container');
-
-        const tabButtons = [summaryTab, detailsTab, historyTab];
-        const tabPanels = [summaryPanel, reportsPanel, historyPanel];
-
-        tabButtons.forEach((button, index) => {
-            button.addEventListener('click', () => {
-                tabButtons.forEach(btn => btn.classList.remove('active'));
-                tabPanels.forEach(panel => panel.classList.add('hidden'));
-
-                button.classList.add('active');
-                tabPanels[index].classList.remove('hidden');
-
-                if (button.id === 'history-tab') {
-                    filtersBox.classList.add('hidden');
-                    saveButtonContainer.classList.add('hidden');
-                } else {
-                    filtersBox.classList.remove('hidden');
-                    saveButtonContainer.classList.remove('hidden');
-                }
+        const setupEventListeners = () => {
+            periodSelect.addEventListener('change', (e) => {
+                state.selectedPeriod = e.target.value;
+                dateRangePicker.classList.toggle('hidden', e.target.value !== 'pasirinkti');
+                renderDashboard();
             });
-        });
 
-        summaryTab.classList.add('active');
+            document.getElementById('start-date').addEventListener('change', renderDashboard);
+            document.getElementById('end-date').addEventListener('change', renderDashboard);
+            grainSelect.addEventListener('change', renderDashboard);
+            document.getElementById('projected-sell-price').addEventListener('input', renderDashboard);
+            document.getElementById('projected-buy-price').addEventListener('input', renderDashboard);
+            document.getElementById('inventory-qty').addEventListener('input', renderDashboard);
+            document.getElementById('inventory-price').addEventListener('input', renderDashboard);
+            document.getElementById('save-report-btn').addEventListener('click', saveReport);
+        };
 
+        const setupTabs = () => {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabPanels = {
+                'summary-tab': document.getElementById('summary-panel'),
+                'details-tab': document.getElementById('reports-panel'),
+                'history-tab': document.getElementById('history-panel')
+            };
+            const filtersBox = document.getElementById('filters-box');
+            const saveButtonContainer = document.getElementById('save-button-container');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    Object.values(tabPanels).forEach(panel => panel.classList.add('hidden'));
+
+                    button.classList.add('active');
+                    tabPanels[button.id].classList.remove('hidden');
+
+                    const isHistoryTab = button.id === 'history-tab';
+                    filtersBox.classList.toggle('hidden', isHistoryTab);
+                    saveButtonContainer.classList.toggle('hidden', isHistoryTab);
+                });
+            });
+
+            document.getElementById('summary-tab').classList.add('active');
+        };
+
+        setupEventListeners();
+        setupTabs();
         loadHistory();
         renderDashboard();
     }
@@ -1223,4 +1226,3 @@
 </script>
 </body>
 </html>
-
