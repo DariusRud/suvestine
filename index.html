@@ -1148,6 +1148,9 @@
 
             renderDashboard();
 
+            // Show both report panels in static mode
+            document.getElementById('reports-panel').classList.remove('hidden');
+
             // Disable all interactions
             document.getElementById('static-mode-overlay').style.display = 'block';
             document.getElementById('tabs-nav').style.display = 'none';
@@ -1226,3 +1229,4 @@
 </script>
 </body>
 </html>
+
