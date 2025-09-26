@@ -996,10 +996,7 @@
 
         const inventoryRowHtml = `
             <tr class="border-b border-gray-200 bg-blue-50">
-                <td class="py-3 px-4 text-left whitespace-nowrap font-bold text-blue-800">Likutis sandėlyje (pradinis)</td>
-                <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatTonnes(inventoryQty, true)}</td>
-                <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatCurrencyPerTon(inventoryPrice, true)}</td>
-                <td class="py-3 px-4 text-right font-mono bg-amber-50 border-r-2 border-gray-400">${formatCurrency(inventoryValue, false, true)}</td>
+                <td class="py-3 px-4 text-left whitespace-nowrap font-bold text-blue-800 border-r-2 border-gray-400">Likutis sandėlyje (pradinis)</td>
                 ${inventoryClientCells}
                 <td class="py-3 px-4 text-right font-mono font-semibold bg-gray-50">${formatTonnes(inventoryQty, true)}</td>
                 <td class="py-3 px-4 text-right font-mono font-semibold bg-gray-50">${formatCurrencyPerTon(projectedSellPrice, true)}</td>
@@ -1034,10 +1031,7 @@
 
             return `
                 <tr class="border-b border-gray-200">
-                    <td class="py-3 px-4 text-left whitespace-nowrap font-medium bg-white">${month.month}</td>
-                    <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatTonnes(month.purchase.total_t, true)}</td>
-                    <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatCurrencyPerTon(p_avg_price, true)}</td>
-                    <td class="py-3 px-4 text-right font-mono bg-amber-50 border-r-2 border-gray-400">${formatCurrency(month.purchase.total_v, false, true)}</td>
+                    <td class="py-3 px-4 text-left whitespace-nowrap font-medium bg-white border-r-2 border-gray-400">${month.month}</td>
                     ${clientCells}
                     <td class="py-3 px-4 text-right font-mono font-semibold ${balanceClass} bg-gray-50">${formatTonnes(runningBalance, true)}</td>
                     <td class="py-3 px-4 text-right font-mono font-semibold bg-gray-50">${formatCurrencyPerTon(projectedSellPrice, true)}</td>
@@ -1073,8 +1067,7 @@
             <table class="min-w-full bg-white text-sm">
                 <thead class="text-gray-600 uppercase text-xs leading-normal">
                     <tr>
-                        <th rowspan="2" class="py-3 px-4 text-left border-b border-r bg-gray-100 align-bottom">Mėnuo</th>
-                        <th colspan="3" class="py-3 px-4 text-center border-b border-r-2 border-gray-400 bg-amber-100">Pirkimai</th>
+                        <th rowspan="2" class="py-3 px-4 text-left border-b border-r-2 border-gray-400 bg-gray-100 align-bottom">Mėnuo</th>
                         ${clientHeaderHtml}
                         <th rowspan="2" class="py-3 px-4 text-right border-b border-r bg-gray-100 align-bottom">Galima parduoti, t</th>
                         <th rowspan="2" class="py-3 px-4 text-right border-b border-r bg-gray-100 align-bottom">Prognozės kaina, €/t</th>
@@ -1082,9 +1075,6 @@
                         <th rowspan="2" class="py-3 px-4 text-right border-b bg-gray-100 align-bottom">Mėnesio +/-, t</th>
                     </tr>
                     <tr>
-                        <th class="py-3 px-4 text-right border-b border-r bg-amber-50">Kiekis, t</th>
-                        <th class="py-3 px-4 text-right border-b border-r bg-amber-50">Vid. Kaina, €/t</th>
-                        <th class="py-3 px-4 text-right border-b border-r-2 border-gray-400 bg-amber-50">Suma, €</th>
                         ${clientSubHeaderHtml}
                     </tr>
                 </thead>
@@ -1094,10 +1084,7 @@
                 </tbody>
                 <tfoot class="text-gray-800 font-bold">
                      <tr class="border-t-2 border-gray-300">
-                        <td class="py-4 px-4 text-left bg-gray-200">Bendra Suma</td>
-                        <td class="py-4 px-4 text-right font-mono bg-amber-100">${formatTonnes(grandTotal.purchase_t, true)}</td>
-                        <td class="py-4 px-4 text-right font-mono bg-amber-100">${formatCurrencyPerTon(grandTotalAvgPurchasePrice, true)}</td>
-                        <td class="py-4 px-4 text-right font-mono bg-amber-100 border-r-2 border-gray-400">${formatCurrency(grandTotal.purchase_v, false, true)}</td>
+                        <td class="py-4 px-4 text-left bg-gray-200 border-r-2 border-gray-400">Bendra Suma</td>
                         ${clientTotalCells}
                         <td class="py-4 px-4 text-right font-mono text-base ${finalBalanceClass} bg-gray-200">${formatTonnes(finalBalance, true)}</td>
                         <td class="py-4 px-4 text-right font-mono text-base bg-gray-200">${formatCurrencyPerTon(projectedSellPrice, true)}</td>
