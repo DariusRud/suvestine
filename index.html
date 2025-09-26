@@ -1242,11 +1242,23 @@
             header.parentNode.insertBefore(staticTitle, header.nextSibling);
 
             const grainText = urlParams.get('grainText');
+            const marketDateText = urlParams.get('marketDate'); // Gauname datą iš URL
+
             if (grainText) {
                 const grainDisplay = document.createElement('h3');
-                grainDisplay.className = 'text-center text-2xl font-semibold text-gray-700 mb-8';
+                // Sumažiname apatinį atstumą, kad data būtų arčiau
+                grainDisplay.className = 'text-center text-2xl font-semibold text-gray-700 mb-4';
                 grainDisplay.innerHTML = `<span class="font-normal">Kultūra:</span> <span class="text-amber-800">${decodeURIComponent(grainText)}</span>`;
                 staticTitle.parentNode.insertBefore(grainDisplay, staticTitle.nextSibling);
+
+                // Sukuriame ir įterpiame datos elementą
+                if (marketDateText) {
+                    const dateDisplay = document.createElement('h3');
+                    dateDisplay.className = 'text-center text-2xl font-semibold text-gray-700 mb-8';
+                    dateDisplay.innerHTML = `<span class="font-normal">Data:</span> <span class="text-amber-800">${marketDateText}</span>`;
+                    // Įterpiame po kultūros elemento
+                    grainDisplay.parentNode.insertBefore(dateDisplay, grainDisplay.nextSibling);
+                }
             }
 
             return; // Stop further initialization for static mode
@@ -1354,4 +1366,5 @@
 </script>
 </body>
 </html>
+
 
