@@ -103,6 +103,9 @@
                 <li role="presentation">
                     <button class="tab-button inline-block p-4 border-b-2 rounded-t-lg" id="details-tab" type="button">Pamėnesiui</button>
                 </li>
+                 <li role="presentation">
+                    <button class="tab-button inline-block p-4 border-b-2 rounded-t-lg" id="sales-tab" type="button">Pardavimai</button>
+                </li>
                 <li role="presentation">
                     <button class="tab-button inline-block p-4 border-b-2 rounded-t-lg" id="history-tab" type="button">Istorija</button>
                 </li>
@@ -437,6 +440,17 @@
                 </div>
             </div>
 
+             <!-- PARDAVIMŲ TAB'as -->
+            <div id="sales-panel" class="hidden">
+                <div class="bg-white p-6 rounded-xl shadow-lg mt-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Detali Ataskaita pagal Pardavimus</h2>
+                    <h3 id="sales-report-grain-title" class="text-xl font-semibold text-gray-700 mb-6"></h3>
+                    <div id="sales-report-content">
+                        <!-- Pardavimų ataskaitos turinys bus generuojamas čia -->
+                    </div>
+                </div>
+            </div>
+
             <!-- ISTORIJOS TAB'as -->
             <div id="history-panel" class="hidden">
                 <div class="max-w-3xl mx-auto p-6 main-card rounded-xl mt-6">
@@ -490,7 +504,7 @@
             name: 'Kviečiai',
              transactions: [
                 { date: '2025-09-01', type: 'purchase', tonnes: 85000, value: 16150000 },
-                { date: '2025-11-01', type: 'sale', tonnes: 72000, value: 15120000 }
+                { date: '2025-11-01', type: 'sale', tonnes: 72000, value: 15120000, client: 'Agritis' }
             ]
         },
         'kvru': { name: 'Kvietrugiai', transactions: [] },
@@ -500,7 +514,7 @@
             name: 'Miežiai', 
             transactions: [
                 { date: '2025-08-20', type: 'purchase', tonnes: 50000, value: 9500000 },
-                { date: '2025-10-15', type: 'sale', tonnes: 43000, value: 8600000 }
+                { date: '2025-10-15', type: 'sale', tonnes: 43000, value: 8600000, client: 'VM' }
             ]
         },
         'pak01': { name: 'Grūdų pakavimo prekės', transactions: [] },
@@ -511,7 +525,7 @@
             name: 'Rapsai',
             transactions: [
                 { date: '2025-07-25', type: 'purchase', tonnes: 25000, value: 11250000 },
-                { date: '2025-09-25', type: 'sale', tonnes: 26000, value: 12220000 }
+                { date: '2025-09-25', type: 'sale', tonnes: 26000, value: 12220000, client: 'Eksportas' }
             ]
         },
         'rugi': { name: 'Rugiai', transactions: [] },
@@ -522,8 +536,8 @@
             transactions: [
                 { date: '2025-09-15', type: 'purchase', tonnes: 26000, value: 5174000 },
                 { date: '2026-02-20', type: 'purchase', tonnes: 24900, value: 4955100 },
-                { date: '2025-10-05', type: 'sale', tonnes: 19500, value: 4270500 },
-                { date: '2026-04-10', type: 'sale', tonnes: 19400, value: 4266984 }
+                { date: '2025-10-05', type: 'sale', tonnes: 19500, value: 4270500, client: 'VM' },
+                { date: '2026-04-10', type: 'sale', tonnes: 19400, value: 4266984, client: 'Eksportas' }
             ]
         },
         'sojo': { name: 'Sojos', transactions: [] },
@@ -534,6 +548,7 @@
     };
 
     const state = { selectedGrain: 'smie', selectedPeriod: 'visas' };
+    const clients = ['VM', 'Eksportas', 'Agritis', 'Laisvas'];
     
      const formatCurrency = (val, sign, plain = false) => {
         if (plain) {
@@ -658,6 +673,71 @@
                 month: month.replace('-', '.'),
                 purchase: { total_t: monthInfo.purchase.tonnes, total_v: monthInfo.purchase.value },
                 sale: { total_t: monthInfo.sale.tonnes, total_v: monthInfo.sale.value },
+                profit: profit,
+                monthlyChange: monthlyChange,
+            };
+        });
+        
+        return reportData;
+    }
+
+    function getSalesMonthlyData() {
+        const grainKey = document.getElementById('grain-select').value;
+        const periodSelection = document.getElementById('period-select').value;
+        
+        let transactions = [];
+        if (grainKey === 'visi') {
+            transactions = Object.values(allData).flatMap(g => g.transactions);
+        } else {
+            transactions = allData[grainKey] ? allData[grainKey].transactions : [];
+        }
+
+        if (periodSelection === 'pasirinkti') {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            if (startDate && endDate) {
+                transactions = transactions.filter(t => t.date >= startDate && t.date <= endDate);
+            }
+        }
+
+        const monthlyData = {};
+        
+        transactions.forEach(t => {
+            const month = t.date.substring(0, 7); // YYYY-MM
+            if (!monthlyData[month]) {
+                monthlyData[month] = {
+                    purchase: { tonnes: 0, value: 0 },
+                    sale: { tonnes: 0, value: 0 },
+                    clients: {}
+                };
+                clients.forEach(c => {
+                    monthlyData[month].clients[c] = { tonnes: 0, value: 0 };
+                });
+            }
+            if (t.type === 'purchase') {
+                monthlyData[month].purchase.tonnes += t.tonnes;
+                monthlyData[month].purchase.value += t.value;
+            } else if (t.type === 'sale') {
+                const client = t.client || 'Laisvas';
+                if (monthlyData[month].clients[client]) {
+                     monthlyData[month].clients[client].tonnes += t.tonnes;
+                     monthlyData[month].clients[client].value += t.value;
+                }
+                monthlyData[month].sale.tonnes += t.tonnes;
+                monthlyData[month].sale.value += t.value;
+            }
+        });
+        
+        const reportData = Object.keys(monthlyData).sort().map(month => {
+            const monthInfo = monthlyData[month];
+            const profit = monthInfo.sale.value - monthInfo.purchase.value;
+            const monthlyChange = monthInfo.purchase.tonnes - monthInfo.sale.tonnes;
+
+            return {
+                month: month.replace('-', '.'),
+                purchase: { total_t: monthInfo.purchase.tonnes, total_v: monthInfo.purchase.value },
+                sale: { total_t: monthInfo.sale.tonnes, total_v: monthInfo.sale.value },
+                clients: monthInfo.clients,
                 profit: profit,
                 monthlyChange: monthlyChange,
             };
@@ -878,6 +958,144 @@
         container.innerHTML = tableHtml;
     }
 
+    function renderSalesReport(totalAvgProfitPerTon, actualProfit) {
+        const reportData = getSalesMonthlyData();
+        const container = document.getElementById('sales-report-content');
+
+        const grainSelect = document.getElementById('grain-select');
+        const selectedGrainText = grainSelect.options[grainSelect.selectedIndex].text;
+        document.getElementById('sales-report-grain-title').innerHTML = `Kultūra: <span class="text-amber-800 font-bold">${selectedGrainText}</span>`;
+        
+        const inventoryQty = parseFloat(document.getElementById('inventory-qty').value.replace(',', '.')) || 0;
+        const inventoryPrice = parseFloat(document.getElementById('inventory-price').value.replace(',', '.')) || 0;
+        const inventoryValue = inventoryQty * inventoryPrice;
+
+        if (reportData.length === 0 && inventoryQty === 0) {
+            container.innerHTML = `<p class="text-center text-gray-500 py-16">Nėra duomenų ataskaitai pagal pasirinktus filtrus.</p>`;
+            return;
+        }
+
+        let grandTotal = { 
+            purchase_t: 0, 
+            purchase_v: 0, 
+            clients: {}
+        };
+        clients.forEach(c => { grandTotal.clients[c] = {tonnes: 0, value: 0}; });
+        let runningBalance = inventoryQty;
+
+        const inventoryRowHtml = `
+            <tr class="border-b border-gray-200 bg-blue-50">
+                <td class="py-3 px-4 text-left whitespace-nowrap font-bold text-blue-800">Likutis sandėlyje (pradinis)</td>
+                <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatTonnes(inventoryQty, true)}</td>
+                <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatCurrencyPerTon(inventoryPrice, true)}</td>
+                <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatCurrency(inventoryValue, false, true)}</td>
+                ${clients.map(() => `<td class="bg-green-50" colspan="3"></td>`).join('')}
+                <td class="py-3 px-4 bg-white"></td>
+                <td class="py-3 px-4 text-right font-mono font-semibold bg-white">${formatTonnes(inventoryQty, true)}</td>
+                <td class="py-3 px-4 bg-white"></td>
+            </tr>`;
+        
+        const tableRows = reportData.map((month) => {
+            grandTotal.purchase_t += month.purchase.total_t;
+            grandTotal.purchase_v += month.purchase.total_v;
+            clients.forEach(c => {
+                grandTotal.clients[c].tonnes += month.clients[c].tonnes;
+                grandTotal.clients[c].value += month.clients[c].value;
+            });
+            
+            runningBalance += month.monthlyChange;
+            
+            const p_avg_price = month.purchase.total_t > 0 ? month.purchase.total_v / month.purchase.total_t : 0;
+            const profitClass = month.profit >= 0 ? 'text-green-600' : 'text-red-600';
+            const monthlyChangeClass = month.monthlyChange >= 0 ? 'text-green-600' : 'text-red-600';
+            const balanceClass = runningBalance < 0 ? 'text-red-600' : 'text-gray-800';
+
+            const clientCells = clients.map(c => {
+                const clientData = month.clients[c];
+                const avgPrice = clientData.tonnes > 0 ? clientData.value / clientData.tonnes : 0;
+                return `
+                    <td class="py-3 px-4 text-right font-mono bg-green-50">${formatTonnes(clientData.tonnes, true)}</td>
+                    <td class="py-3 px-4 text-right font-mono bg-green-50">${formatCurrencyPerTon(avgPrice, true)}</td>
+                    <td class="py-3 px-4 text-right font-mono bg-green-50">${formatCurrency(clientData.value, false, true)}</td>
+                `;
+            }).join('');
+
+            return `
+                <tr class="border-b border-gray-200">
+                    <td class="py-3 px-4 text-left whitespace-nowrap font-medium bg-white">${month.month}</td>
+                    <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatTonnes(month.purchase.total_t, true)}</td>
+                    <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatCurrencyPerTon(p_avg_price, true)}</td>
+                    <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatCurrency(month.purchase.total_v, false, true)}</td>
+                    ${clientCells}
+                    <td class="py-3 px-4 text-right font-mono font-semibold ${monthlyChangeClass} bg-white">${formatTonnesWithSign(month.monthlyChange, true)}</td>
+                    <td class="py-3 px-4 text-right font-mono font-semibold ${balanceClass} bg-white">${formatTonnes(runningBalance, true)}</td>
+                    <td class="py-3 px-4 text-right font-mono font-semibold ${profitClass} bg-white">${formatCurrency(month.profit, true, true)}</td>
+                </tr>`;
+        }).join('');
+
+        const grandTotalAvgPurchasePrice = grandTotal.purchase_t > 0 ? grandTotal.purchase_v / grandTotal.purchase_t : 0;
+        const actualProfitClass = actualProfit >= 0 ? 'text-green-700' : 'text-red-700';
+        const finalBalance = inventoryQty + grandTotal.purchase_t - clients.reduce((sum, c) => sum + grandTotal.clients[c].tonnes, 0);
+        const finalBalanceClass = finalBalance < 0 ? 'text-red-700' : 'text-gray-800';
+
+        const clientTotalCells = clients.map(c => {
+            const clientTotal = grandTotal.clients[c];
+            const avgPrice = clientTotal.tonnes > 0 ? clientTotal.value / clientTotal.tonnes : 0;
+            return `
+                <td class="py-4 px-4 text-right font-mono bg-green-100">${formatTonnes(clientTotal.tonnes, true)}</td>
+                <td class="py-4 px-4 text-right font-mono bg-green-100">${formatCurrencyPerTon(avgPrice, true)}</td>
+                <td class="py-4 px-4 text-right font-mono bg-green-100">${formatCurrency(clientTotal.value, false, true)}</td>
+            `;
+        }).join('');
+
+        let clientHeaderHtml = clients.map(c => `<th colspan="3" class="py-3 px-4 text-center border-b border-r bg-green-100">${c}</th>`).join('');
+        let clientSubHeaderHtml = clients.map(() => `
+            <th class="py-3 px-4 text-right border-b border-r bg-green-50">Kiekis, t</th>
+            <th class="py-3 px-4 text-right border-b border-r bg-green-50">Vid. Kaina, €/t</th>
+            <th class="py-3 px-4 text-right border-b border-r bg-green-50">Suma, €</th>
+        `).join('');
+
+        const tableHtml = `
+        <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-md">
+            <table class="min-w-full bg-white text-sm">
+                <thead class="text-gray-600 uppercase text-xs leading-normal">
+                    <tr>
+                        <th rowspan="2" class="py-3 px-4 text-left border-b border-r bg-gray-100 align-bottom">Mėnuo</th>
+                        <th colspan="3" class="py-3 px-4 text-center border-b border-r bg-amber-100">Pirkimai</th>
+                        ${clientHeaderHtml}
+                        <th rowspan="2" class="py-3 px-4 text-right border-b border-r bg-gray-100 align-bottom">Mėnesio +/-, t</th>
+                        <th rowspan="2" class="py-3 px-4 text-right border-b border-r bg-gray-100 align-bottom">Likutis, t</th>
+                        <th rowspan="2" class="py-3 px-4 text-right border-b bg-gray-100 align-bottom">Pelnas, €</th>
+                    </tr>
+                    <tr>
+                        <th class="py-3 px-4 text-right border-b border-r bg-amber-50">Kiekis, t</th>
+                        <th class="py-3 px-4 text-right border-b border-r bg-amber-50">Vid. Kaina, €/t</th>
+                        <th class="py-3 px-4 text-right border-b border-r bg-amber-50">Suma, €</th>
+                        ${clientSubHeaderHtml}
+                    </tr>
+                </thead>
+                <tbody class="text-gray-700 font-light">
+                    ${(inventoryQty > 0 || reportData.length > 0) ? inventoryRowHtml : ''}
+                    ${tableRows}
+                </tbody>
+                <tfoot class="text-gray-800 font-bold">
+                     <tr class="border-t-2 border-gray-300">
+                        <td class="py-4 px-4 text-left bg-gray-200">Bendra Suma</td>
+                        <td class="py-4 px-4 text-right font-mono bg-amber-100">${formatTonnes(grandTotal.purchase_t, true)}</td>
+                        <td class="py-4 px-4 text-right font-mono bg-amber-100">${formatCurrencyPerTon(grandTotalAvgPurchasePrice, true)}</td>
+                        <td class="py-4 px-4 text-right font-mono bg-amber-100">${formatCurrency(grandTotal.purchase_v, false, true)}</td>
+                        ${clientTotalCells}
+                        <td class="py-4 px-4 text-right bg-gray-200"></td>
+                        <td class="py-4 px-4 text-right font-mono text-base ${finalBalanceClass} bg-gray-200">${formatTonnes(finalBalance, true)}</td>
+                        <td class="py-4 px-4 text-right font-mono text-base ${actualProfitClass} bg-gray-200">${formatCurrency(actualProfit, true, true)}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        `;
+        container.innerHTML = tableHtml;
+    }
+
 
     function renderDashboard() {
         state.selectedGrain = document.getElementById('grain-select').value;
@@ -1092,6 +1310,7 @@
         }
 
         renderDetailedReport(totalProfitPerTon, actualProfit);
+        renderSalesReport(totalProfitPerTon, actualProfit);
         checkSaveButtonState();
     }
     
@@ -1257,6 +1476,7 @@
 
             // Show both report panels in static mode
             document.getElementById('reports-panel').classList.remove('hidden');
+             document.getElementById('sales-panel').classList.remove('hidden');
 
             // Disable all interactions
             document.getElementById('static-mode-overlay').style.display = 'block';
@@ -1357,6 +1577,7 @@
             const tabPanels = {
                 'summary-tab': document.getElementById('summary-panel'),
                 'details-tab': document.getElementById('reports-panel'),
+                'sales-tab': document.getElementById('sales-panel'),
                 'history-tab': document.getElementById('history-panel')
             };
             const filtersBox = document.getElementById('filters-box');
@@ -1372,9 +1593,10 @@
 
                     const isHistoryTab = button.id === 'history-tab';
                     const isDetailsTab = button.id === 'details-tab';
+                    const isSalesTab = button.id === 'sales-tab';
 
-                    // Hide filters for 'Pamėnesiui' and 'Istorija'
-                    filtersBox.classList.toggle('hidden', isHistoryTab || isDetailsTab);
+                    // Hide filters for 'Pamėnesiui', 'Pardavimai' and 'Istorija'
+                    filtersBox.classList.toggle('hidden', isHistoryTab || isDetailsTab || isSalesTab);
 
                     // Hide save button ONLY for 'Istorija'
                     saveButtonContainer.classList.toggle('hidden', isHistoryTab);
