@@ -962,7 +962,7 @@
         container.innerHTML = tableHtml;
     }
 
-    function renderSalesReport() {
+    function renderSalesReport(costOfGoodsSold, actualProfit, contractAvgBuyPrice) {
         const reportData = getSalesMonthlyData();
         const container = document.getElementById('sales-report-content');
 
@@ -1036,6 +1036,47 @@
             <th class="py-3 px-4 text-right border-b border-r bg-green-50">Vid. Kaina, €/t</th>
             <th class="py-3 px-4 text-right border-b ${index < clients.length - 1 ? 'border-r-2 border-gray-400' : ''} bg-green-50">Suma, €</th>
         `).join('');
+        
+        const clientCogsCells = clients.map((c, index) => {
+            const clientTotal = grandTotal.clients[c];
+            const clientCogs = clientTotal.tonnes * contractAvgBuyPrice;
+            return `
+                <td class="py-3 px-4 text-right font-mono text-base bg-gray-200 ${index < clients.length - 1 ? 'border-r-2 border-gray-400' : ''}" colspan="3">
+                    <span class="block text-red-700">${formatCurrency(clientCogs)}</span>
+                    <span class="block text-xs text-gray-600 font-normal">(${formatCurrencyPerTon(contractAvgBuyPrice)}/t)</span>
+                </td>
+            `;
+        }).join('');
+
+        const clientProfitCells = clients.map((c, index) => {
+            const clientTotal = grandTotal.clients[c];
+            const clientCogs = clientTotal.tonnes * contractAvgBuyPrice;
+            const clientProfit = clientTotal.value - clientCogs;
+            const clientMargin = clientTotal.tonnes > 0 ? clientProfit / clientTotal.tonnes : 0;
+            const profitClass = clientProfit >= 0 ? 'text-green-700' : 'text-red-700';
+            return `
+                <td class="py-3 px-4 text-right font-mono text-base bg-gray-200 ${index < clients.length - 1 ? 'border-r-2 border-gray-400' : ''}" colspan="3">
+                    <span class="block ${profitClass}">${formatCurrency(clientProfit)}</span>
+                    <span class="block text-xs text-gray-600 font-normal">(${formatCurrencyPerTon(clientMargin)}/t)</span>
+                </td>
+            `;
+        }).join('');
+
+        const totalMargin = grandTotalSales_t > 0 ? actualProfit / grandTotalSales_t : 0;
+        const actualProfitClass = actualProfit >= 0 ? 'text-green-700' : 'text-red-700';
+
+        const totalCogsCell = `
+            <td class="py-3 px-4 text-right font-mono text-base bg-gray-200 border-l-2 border-gray-400" colspan="3">
+                <span class="block text-red-700">${formatCurrency(costOfGoodsSold)}</span>
+                <span class="block text-xs text-gray-600 font-normal">(${formatCurrencyPerTon(contractAvgBuyPrice)}/t)</span>
+            </td>`;
+       
+        const totalProfitCell = `
+            <td class="py-3 px-4 text-right font-mono text-base bg-gray-200 border-l-2 border-gray-400" colspan="3">
+                <span class="block ${actualProfitClass}">${formatCurrency(actualProfit)}</span>
+                <span class="block text-xs text-gray-600 font-normal">(${formatCurrencyPerTon(totalMargin)}/t)</span>
+            </td>`;
+
 
         const tableHtml = `
         <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-md">
@@ -1062,6 +1103,16 @@
                         ${clientTotalCells}
                         ${totalCells}
                     </tr>
+                    <tr class="border-t border-gray-300">
+                        <td class="py-3 px-4 text-left bg-gray-200 border-r-2 border-gray-400">Bendra Savikaina</td>
+                        ${clientCogsCells}
+                        ${totalCogsCell}
+                    </tr>
+                    <tr class="border-t border-gray-300">
+                        <td class="py-3 px-4 text-left bg-gray-200 border-r-2 border-gray-400">Pelnas / Nuostolis</td>
+                        ${clientProfitCells}
+                        ${totalProfitCell}
+                    </tr>
                 </tfoot>
             </table>
         </div>
@@ -1071,6 +1122,8 @@
 
 
     function renderDashboard() {
+        state.selectedGrain = document.getElementById('grain-select').value;
+        
         // 1. Get manual inventory input
         const inventoryQty = parseFloat(document.getElementById('inventory-qty').value.replace(',', '.')) || 0;
         const inventoryPrice = parseFloat(document.getElementById('inventory-price').value.replace(',', '.')) || 0;
@@ -1281,7 +1334,7 @@
         }
 
         renderDetailedReport(totalProfitPerTon, actualProfit, totalProjectedProfit);
-        renderSalesReport();
+        renderSalesReport(costOfGoodsSold, actualProfit, contractAvgBuyPrice);
         checkSaveButtonState();
     }
     
@@ -1588,4 +1641,5 @@
 </script>
 </body>
 </html>
+
 
