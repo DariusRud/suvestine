@@ -752,7 +752,7 @@
     }
 
 
-    function renderDetailedReport(totalAvgProfitPerTon, actualProfit) {
+    function renderDetailedReport(totalAvgProfitPerTon, actualProfit, totalProjectedProfit) {
         const reportData = getDetailedMonthlyData();
         const container = document.getElementById('reports-content');
 
@@ -832,7 +832,7 @@
         const contractOpenQty = contractData.totalPurchasedTonnes - contractData.totalSoldTonnes;
         const totalOpenPosition = contractOpenQty + inventoryQty;
         
-        if (totalOpenPosition >= 0) { // Surplus forecast
+        if (totalOpenPosition > 0) { // Surplus forecast
             const forecastQty = totalOpenPosition;
             const forecastPrice = projectedSellPrice;
             const forecastSum = forecastQty * forecastPrice;
@@ -841,7 +841,6 @@
             const contractAvgBuyPrice = contractData.totalPurchasedTonnes > 0 ? contractData.totalPurchaseValue / contractData.totalPurchasedTonnes : 0;
             const contractOpenValueForProfit = contractOpenQty * contractAvgBuyPrice;
             const totalOpenPositionValue = contractOpenValueForProfit + inventoryTotalValueForProfit;
-            const avgCostPrice = forecastQty > 0 ? totalOpenPositionValue / forecastQty : 0;
 
             if (forecastPrice > 0) {
                 forecastProfit = forecastSum - totalOpenPositionValue;
@@ -850,19 +849,22 @@
             const profitClass = forecastProfit >= 0 ? 'text-green-700' : 'text-red-700';
 
             forecastRowHtml = `
-                <tr class="border-t border-gray-300">
-                    <td class="py-4 px-4 text-left text-amber-800 font-bold bg-gray-100">Prognozė</td>
-                    <td class="py-4 px-4 text-right font-mono text-amber-800 font-bold bg-amber-100">${formatTonnes(forecastQty, true)}</td>
-                    <td class="py-4 px-4 text-right font-mono text-amber-800 font-bold bg-amber-100">${formatCurrencyPerTon(avgCostPrice, true)}</td>
-                    <td class="py-4 px-4 text-right font-mono text-amber-800 font-bold bg-amber-100">${formatCurrency(totalOpenPositionValue, false, true)}</td>
-                    <td class="py-4 px-4 text-right font-mono text-amber-800 font-bold bg-green-100">${formatTonnes(forecastQty, true)}</td>
-                    <td class="py-4 px-4 text-right font-mono text-amber-800 font-bold bg-green-100">${formatCurrencyPerTon(forecastPrice, true)}</td>
-                    <td class="py-4 px-4 text-right font-mono text-amber-800 font-bold bg-green-100">${formatCurrency(forecastSum, false, true)}</td>
-                    <td class="py-4 px-4 bg-gray-200"></td>
-                    <td class="py-4 px-4 bg-gray-200"></td>
-                    <td class="py-4 px-4 text-right font-mono text-base ${profitClass} bg-gray-200">${formatCurrency(forecastProfit, true, true)}</td>
+                <tr class="border-t-2 border-gray-300 text-gray-800">
+                    <td class="py-3 px-4 text-left font-bold bg-gray-100 align-middle">Prognozė</td>
+                    <td class="py-3 px-4 text-center bg-amber-50" colspan="3">
+                        <span class="block text-xs text-gray-600">Likučio (${formatTonnes(forecastQty, true)}) savikaina</span>
+                        <span class="block font-mono font-bold text-base">${formatCurrency(totalOpenPositionValue)}</span>
+                    </td>
+                    <td class="py-3 px-4 text-center bg-green-50" colspan="3">
+                        <span class="block text-xs text-gray-600">Prognozuojamos pajamos</span>
+                        <span class="block font-mono font-bold text-base">${formatCurrency(forecastSum)}</span>
+                    </td>
+                    <td class="py-3 px-4 text-center bg-gray-100" colspan="3">
+                        <span class="block text-xs text-gray-600">Prognozuojamas pelnas</span>
+                        <span class="block font-mono font-bold text-base ${profitClass}">${formatCurrency(forecastProfit, true)}</span>
+                    </td>
                 </tr>`;
-        } else { // Deficit forecast
+        } else if (totalOpenPosition < 0) { // Deficit forecast
             const forecastQty = Math.abs(totalOpenPosition);
             const forecastPrice = projectedBuyPrice;
             const forecastSum = forecastQty * forecastPrice;
@@ -877,27 +879,29 @@
             const profitClass = forecastProfit >= 0 ? 'text-green-700' : 'text-red-700';
 
             forecastRowHtml = `
-                 <tr class="border-t border-gray-300">
-                    <td class="py-4 px-4 text-left text-amber-800 font-bold bg-gray-100">Prognozė</td>
-                    <td class="py-4 px-4 text-right font-mono text-amber-800 font-bold bg-amber-100">${formatTonnes(forecastQty, true)}</td>
-                    <td class="py-4 px-4 text-right font-mono text-amber-800 font-bold bg-amber-100">${formatCurrencyPerTon(forecastPrice, true)}</td>
-                    <td class="py-4 px-4 text-right font-mono text-amber-800 font-bold bg-amber-100">${formatCurrency(forecastSum, false, true)}</td>
-                    <td class="py-4 px-4 text-right font-mono text-amber-800 font-bold bg-green-100">${formatTonnes(forecastQty, true)}</td>
-                    <td class="py-4 px-4 text-right font-mono text-amber-800 font-bold bg-green-100">${formatCurrencyPerTon(avgSellPrice, true)}</td>
-                    <td class="py-4 px-4 text-right font-mono text-amber-800 font-bold bg-green-100">${formatCurrency(revenueForDeficit, false, true)}</td>
-                    <td class="py-4 px-4 bg-gray-200"></td>
-                    <td class="py-4 px-4 bg-gray-200"></td>
-                    <td class="py-4 px-4 text-right font-mono text-base ${profitClass} bg-gray-200">${formatCurrency(forecastProfit, true, true)}</td>
+                 <tr class="border-t-2 border-gray-300 text-gray-800">
+                    <td class="py-3 px-4 text-left font-bold bg-gray-100 align-middle">Prognozė</td>
+                    <td class="py-3 px-4 text-center bg-amber-50" colspan="3">
+                        <span class="block text-xs text-gray-600">Trūkstamo kiekio (${formatTonnes(forecastQty, true)}) pirkimo kaina</span>
+                        <span class="block font-mono font-bold text-base">${formatCurrency(forecastSum)}</span>
+                    </td>
+                    <td class="py-3 px-4 text-center bg-green-50" colspan="3">
+                        <span class="block text-xs text-gray-600">Pajamos už trūkstamą kiekį</span>
+                        <span class="block font-mono font-bold text-base">${formatCurrency(revenueForDeficit)}</span>
+                    </td>
+                    <td class="py-3 px-4 text-center bg-gray-100" colspan="3">
+                        <span class="block text-xs text-gray-600">Prognozuojamas pelnas</span>
+                        <span class="block font-mono font-bold text-base ${profitClass}">${formatCurrency(forecastProfit, true)}</span>
+                    </td>
                 </tr>`;
         }
 
-        const finalProjectedProfit = actualProfit + forecastProfit;
-        const finalProjectedProfitClass = finalProjectedProfit >= 0 ? 'text-green-700' : 'text-red-700';
+        const finalProjectedProfitClass = totalProjectedProfit >= 0 ? 'text-green-700' : 'text-red-700';
 
         const finalTotalRowHtml = `
             <tr class="bg-gray-200">
                 <td colspan="9" class="py-3 px-4 text-right font-bold text-base">Bendra Suma (su prognoze)</td>
-                <td class="py-3 px-4 text-right font-mono font-bold text-base ${finalProjectedProfitClass}">${formatCurrency(finalProjectedProfit, true, true)}</td>
+                <td class="py-3 px-4 text-right font-mono font-bold text-base ${finalProjectedProfitClass}">${formatCurrency(totalProjectedProfit, true, true)}</td>
             </tr>
         `;
 
@@ -1320,7 +1324,7 @@
             totalProfitPerTonContainer.classList.toggle('text-green-400', totalProfitPerTon >= 0);
         }
 
-        renderDetailedReport(totalProfitPerTon, actualProfit);
+        renderDetailedReport(totalProfitPerTon, actualProfit, totalProjectedProfit);
         renderSalesReport(totalProfitPerTon, actualProfit);
         checkSaveButtonState();
     }
