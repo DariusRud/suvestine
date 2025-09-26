@@ -174,15 +174,24 @@
                         <h3 class="font-semibold text-amber-100 mb-4">Bendra Prognozė (Faktas + Prognozė)</h3>
                         <div class="summary-row border-amber-700">
                             <span class="summary-label text-amber-200">Faktinis pelnas / nuostolis</span>
-                            <span id="total-summary-actual-profit" class="summary-value text-amber-100">€0</span>
+                            <div>
+                                <span id="total-summary-actual-profit" class="summary-value text-amber-100 block">€0</span>
+                                <span id="total-summary-actual-profit-per-ton" class="block text-xs font-normal text-amber-300 text-right font-mono">(€0,00/t)</span>
+                            </div>
                         </div>
                         <div class="summary-row border-amber-700" id="total-surplus-row">
                             <span class="summary-label text-amber-200">Prognozuojamas pelnas / nuostolis (neparduotam kiekui)</span>
-                            <span id="total-summary-surplus-profit" class="summary-value text-amber-100">€0</span>
+                             <div>
+                                <span id="total-summary-surplus-profit" class="summary-value text-amber-100 block">€0</span>
+                                <span id="total-summary-surplus-profit-per-ton" class="block text-xs font-normal text-amber-300 text-right font-mono">(€0,00/t)</span>
+                            </div>
                         </div>
                         <div class="summary-row border-amber-700" id="total-deficit-row">
                             <span class="summary-label text-amber-200">Prognozuojamas pelnas / nuostolis (reikiamo kiekio)</span>
-                            <span id="total-summary-deficit-profit" class="summary-value text-amber-100">€0</span>
+                            <div>
+                                <span id="total-summary-deficit-profit" class="summary-value text-amber-100 block">€0</span>
+                                <span id="total-summary-deficit-profit-per-ton" class="block text-xs font-normal text-amber-300 text-right font-mono">(€0,00/t)</span>
+                            </div>
                         </div>
                         <div class="summary-row summary-total border-amber-600">
                             <span class="summary-label text-lg text-amber-100">Bendras Prognozuojamas Pelnas / Nuostolis</span>
@@ -968,6 +977,7 @@
         
         // Populate Projections (using TOTAL open position)
         let projectedProfit = 0;
+        let projectedProfitPerTon = 0;
         const surplusBlock = document.getElementById('surplus-projection-block');
         const deficitBlock = document.getElementById('deficit-projection-block');
         const totalSurplusRow = document.getElementById('total-surplus-row');
@@ -989,11 +999,14 @@
             projectedProfitEl.classList.toggle('text-red-600', projectedProfit < 0);
             projectedProfitEl.classList.toggle('text-green-600', projectedProfit >= 0);
 
-            const projectedProfitPerTon = totalOpenPosition !== 0 ? projectedProfit / totalOpenPosition : 0;
+            projectedProfitPerTon = totalOpenPosition !== 0 ? projectedProfit / totalOpenPosition : 0;
             const surplusProjectedProfitPerTonEl = document.getElementById('surplus-projected-profit-per-ton');
             surplusProjectedProfitPerTonEl.textContent = formatCurrencyPerTon(projectedProfitPerTon);
             surplusProjectedProfitPerTonEl.classList.toggle('text-red-600', projectedProfitPerTon < 0);
             surplusProjectedProfitPerTonEl.classList.toggle('text-green-600', projectedProfitPerTon >= 0);
+            
+            document.getElementById('total-summary-surplus-profit-per-ton').textContent = `(${formatCurrencyPerTon(projectedProfitPerTon)}/t)`;
+            document.getElementById('total-summary-deficit-profit-per-ton').textContent = `(€0,00/t)`;
         } else {
             surplusBlock.classList.add('inactive-block');
             deficitBlock.classList.remove('inactive-block');
@@ -1011,11 +1024,14 @@
             deficitProfitEl.classList.toggle('text-red-600', projectedProfit < 0);
             deficitProfitEl.classList.toggle('text-green-600', projectedProfit >= 0);
 
-            const projectedProfitPerTon = totalOpenPosition !== 0 ? projectedProfit / Math.abs(totalOpenPosition) : 0;
+            projectedProfitPerTon = totalOpenPosition !== 0 ? projectedProfit / Math.abs(totalOpenPosition) : 0;
             const deficitProjectedProfitPerTonEl = document.getElementById('deficit-projected-profit-per-ton');
             deficitProjectedProfitPerTonEl.textContent = formatCurrencyPerTon(projectedProfitPerTon);
             deficitProjectedProfitPerTonEl.classList.toggle('text-red-600', projectedProfitPerTon < 0);
             deficitProjectedProfitPerTonEl.classList.toggle('text-green-600', projectedProfitPerTon >= 0);
+            
+            document.getElementById('total-summary-deficit-profit-per-ton').textContent = `(${formatCurrencyPerTon(projectedProfitPerTon)}/t)`;
+            document.getElementById('total-summary-surplus-profit-per-ton').textContent = `(€0,00/t)`;
         }
         
         // Populate final summaries
@@ -1043,6 +1059,8 @@
         // Populate averages
         const overallAvgBuyPrice = (contractData.totalPurchasedTonnes + inventoryQty) > 0 ? (contractData.totalPurchaseValue + inventoryTotalValue) / (contractData.totalPurchasedTonnes + inventoryQty) : 0;
         const actualProfitPerTon = totalSoldTonnes > 0 ? actualProfit / totalSoldTonnes : 0;
+        
+        document.getElementById('total-summary-actual-profit-per-ton').textContent = `(${formatCurrencyPerTon(actualProfitPerTon)}/t)`;
         
         const totalPurchasedAndInventory = contractData.totalPurchasedTonnes + inventoryQty;
         const totalProfitPerTon = totalPurchasedAndInventory > 0 ? totalProjectedProfit / totalPurchasedAndInventory : 0;
@@ -1366,5 +1384,4 @@
 </script>
 </body>
 </html>
-
 
