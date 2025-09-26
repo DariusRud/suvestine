@@ -982,17 +982,20 @@
         };
         clients.forEach(c => { grandTotal.clients[c] = {tonnes: 0, value: 0}; });
         let runningBalance = inventoryQty;
+        
+        const inventoryClientCells = clients.map((c, index) => 
+            `<td class="bg-green-50 ${index < clients.length - 1 ? 'border-r-2 border-gray-400' : ''}" colspan="3"></td>`
+        ).join('');
 
         const inventoryRowHtml = `
             <tr class="border-b border-gray-200 bg-blue-50">
                 <td class="py-3 px-4 text-left whitespace-nowrap font-bold text-blue-800">Likutis sandėlyje (pradinis)</td>
                 <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatTonnes(inventoryQty, true)}</td>
                 <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatCurrencyPerTon(inventoryPrice, true)}</td>
-                <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatCurrency(inventoryValue, false, true)}</td>
-                ${clients.map(() => `<td class="bg-green-50" colspan="3"></td>`).join('')}
+                <td class="py-3 px-4 text-right font-mono bg-amber-50 border-r-2 border-gray-400">${formatCurrency(inventoryValue, false, true)}</td>
+                ${inventoryClientCells}
                 <td class="py-3 px-4 bg-white"></td>
                 <td class="py-3 px-4 text-right font-mono font-semibold bg-white">${formatTonnes(inventoryQty, true)}</td>
-                <td class="py-3 px-4 bg-white"></td>
             </tr>`;
         
         const tableRows = reportData.map((month) => {
@@ -1006,17 +1009,16 @@
             runningBalance += month.monthlyChange;
             
             const p_avg_price = month.purchase.total_t > 0 ? month.purchase.total_v / month.purchase.total_t : 0;
-            const profitClass = month.profit >= 0 ? 'text-green-600' : 'text-red-600';
             const monthlyChangeClass = month.monthlyChange >= 0 ? 'text-green-600' : 'text-red-600';
             const balanceClass = runningBalance < 0 ? 'text-red-600' : 'text-gray-800';
 
-            const clientCells = clients.map(c => {
+            const clientCells = clients.map((c, index) => {
                 const clientData = month.clients[c];
                 const avgPrice = clientData.tonnes > 0 ? clientData.value / clientData.tonnes : 0;
                 return `
                     <td class="py-3 px-4 text-right font-mono bg-green-50">${formatTonnes(clientData.tonnes, true)}</td>
                     <td class="py-3 px-4 text-right font-mono bg-green-50">${formatCurrencyPerTon(avgPrice, true)}</td>
-                    <td class="py-3 px-4 text-right font-mono bg-green-50">${formatCurrency(clientData.value, false, true)}</td>
+                    <td class="py-3 px-4 text-right font-mono bg-green-50 ${index < clients.length - 1 ? 'border-r-2 border-gray-400' : ''}">${formatCurrency(clientData.value, false, true)}</td>
                 `;
             }).join('');
 
@@ -1025,34 +1027,32 @@
                     <td class="py-3 px-4 text-left whitespace-nowrap font-medium bg-white">${month.month}</td>
                     <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatTonnes(month.purchase.total_t, true)}</td>
                     <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatCurrencyPerTon(p_avg_price, true)}</td>
-                    <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatCurrency(month.purchase.total_v, false, true)}</td>
+                    <td class="py-3 px-4 text-right font-mono bg-amber-50 border-r-2 border-gray-400">${formatCurrency(month.purchase.total_v, false, true)}</td>
                     ${clientCells}
                     <td class="py-3 px-4 text-right font-mono font-semibold ${monthlyChangeClass} bg-white">${formatTonnesWithSign(month.monthlyChange, true)}</td>
                     <td class="py-3 px-4 text-right font-mono font-semibold ${balanceClass} bg-white">${formatTonnes(runningBalance, true)}</td>
-                    <td class="py-3 px-4 text-right font-mono font-semibold ${profitClass} bg-white">${formatCurrency(month.profit, true, true)}</td>
                 </tr>`;
         }).join('');
 
         const grandTotalAvgPurchasePrice = grandTotal.purchase_t > 0 ? grandTotal.purchase_v / grandTotal.purchase_t : 0;
-        const actualProfitClass = actualProfit >= 0 ? 'text-green-700' : 'text-red-700';
         const finalBalance = inventoryQty + grandTotal.purchase_t - clients.reduce((sum, c) => sum + grandTotal.clients[c].tonnes, 0);
         const finalBalanceClass = finalBalance < 0 ? 'text-red-700' : 'text-gray-800';
 
-        const clientTotalCells = clients.map(c => {
+        const clientTotalCells = clients.map((c, index) => {
             const clientTotal = grandTotal.clients[c];
             const avgPrice = clientTotal.tonnes > 0 ? clientTotal.value / clientTotal.tonnes : 0;
             return `
                 <td class="py-4 px-4 text-right font-mono bg-green-100">${formatTonnes(clientTotal.tonnes, true)}</td>
                 <td class="py-4 px-4 text-right font-mono bg-green-100">${formatCurrencyPerTon(avgPrice, true)}</td>
-                <td class="py-4 px-4 text-right font-mono bg-green-100">${formatCurrency(clientTotal.value, false, true)}</td>
+                <td class="py-4 px-4 text-right font-mono bg-green-100 ${index < clients.length - 1 ? 'border-r-2 border-gray-400' : ''}">${formatCurrency(clientTotal.value, false, true)}</td>
             `;
         }).join('');
 
-        let clientHeaderHtml = clients.map(c => `<th colspan="3" class="py-3 px-4 text-center border-b border-r bg-green-100">${c}</th>`).join('');
-        let clientSubHeaderHtml = clients.map(() => `
+        let clientHeaderHtml = clients.map((c, index) => `<th colspan="3" class="py-3 px-4 text-center border-b ${index < clients.length - 1 ? 'border-r-2 border-gray-400' : ''} bg-green-100">${c}</th>`).join('');
+        let clientSubHeaderHtml = clients.map((c, index) => `
             <th class="py-3 px-4 text-right border-b border-r bg-green-50">Kiekis, t</th>
             <th class="py-3 px-4 text-right border-b border-r bg-green-50">Vid. Kaina, €/t</th>
-            <th class="py-3 px-4 text-right border-b border-r bg-green-50">Suma, €</th>
+            <th class="py-3 px-4 text-right border-b ${index < clients.length - 1 ? 'border-r-2 border-gray-400' : ''} bg-green-50">Suma, €</th>
         `).join('');
 
         const tableHtml = `
@@ -1061,16 +1061,15 @@
                 <thead class="text-gray-600 uppercase text-xs leading-normal">
                     <tr>
                         <th rowspan="2" class="py-3 px-4 text-left border-b border-r bg-gray-100 align-bottom">Mėnuo</th>
-                        <th colspan="3" class="py-3 px-4 text-center border-b border-r bg-amber-100">Pirkimai</th>
+                        <th colspan="3" class="py-3 px-4 text-center border-b border-r-2 border-gray-400 bg-amber-100">Pirkimai</th>
                         ${clientHeaderHtml}
                         <th rowspan="2" class="py-3 px-4 text-right border-b border-r bg-gray-100 align-bottom">Mėnesio +/-, t</th>
-                        <th rowspan="2" class="py-3 px-4 text-right border-b border-r bg-gray-100 align-bottom">Likutis, t</th>
-                        <th rowspan="2" class="py-3 px-4 text-right border-b bg-gray-100 align-bottom">Pelnas, €</th>
+                        <th rowspan="2" class="py-3 px-4 text-right border-b bg-gray-100 align-bottom">Likutis, t</th>
                     </tr>
                     <tr>
                         <th class="py-3 px-4 text-right border-b border-r bg-amber-50">Kiekis, t</th>
                         <th class="py-3 px-4 text-right border-b border-r bg-amber-50">Vid. Kaina, €/t</th>
-                        <th class="py-3 px-4 text-right border-b border-r bg-amber-50">Suma, €</th>
+                        <th class="py-3 px-4 text-right border-b border-r-2 border-gray-400 bg-amber-50">Suma, €</th>
                         ${clientSubHeaderHtml}
                     </tr>
                 </thead>
@@ -1083,11 +1082,10 @@
                         <td class="py-4 px-4 text-left bg-gray-200">Bendra Suma</td>
                         <td class="py-4 px-4 text-right font-mono bg-amber-100">${formatTonnes(grandTotal.purchase_t, true)}</td>
                         <td class="py-4 px-4 text-right font-mono bg-amber-100">${formatCurrencyPerTon(grandTotalAvgPurchasePrice, true)}</td>
-                        <td class="py-4 px-4 text-right font-mono bg-amber-100">${formatCurrency(grandTotal.purchase_v, false, true)}</td>
+                        <td class="py-4 px-4 text-right font-mono bg-amber-100 border-r-2 border-gray-400">${formatCurrency(grandTotal.purchase_v, false, true)}</td>
                         ${clientTotalCells}
                         <td class="py-4 px-4 text-right bg-gray-200"></td>
                         <td class="py-4 px-4 text-right font-mono text-base ${finalBalanceClass} bg-gray-200">${formatTonnes(finalBalance, true)}</td>
-                        <td class="py-4 px-4 text-right font-mono text-base ${actualProfitClass} bg-gray-200">${formatCurrency(actualProfit, true, true)}</td>
                     </tr>
                 </tfoot>
             </table>
