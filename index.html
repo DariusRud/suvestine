@@ -548,7 +548,7 @@
     };
 
     const state = { selectedGrain: 'smie', selectedPeriod: 'visas' };
-    const clients = ['VM', 'Eksportas', 'Agritis', 'Laisvas'];
+    const clients = ['VM', 'Eksportas', 'Agritis'];
     
      const formatCurrency = (val, sign, plain = false) => {
         if (plain) {
@@ -718,8 +718,8 @@
                 monthlyData[month].purchase.tonnes += t.tonnes;
                 monthlyData[month].purchase.value += t.value;
             } else if (t.type === 'sale') {
-                const client = t.client || 'Laisvas';
-                if (monthlyData[month].clients[client]) {
+                const client = t.client;
+                if (client && monthlyData[month].clients[client]) {
                      monthlyData[month].clients[client].tonnes += t.tonnes;
                      monthlyData[month].clients[client].value += t.value;
                 }
@@ -994,8 +994,8 @@
                 <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatCurrencyPerTon(inventoryPrice, true)}</td>
                 <td class="py-3 px-4 text-right font-mono bg-amber-50 border-r-2 border-gray-400">${formatCurrency(inventoryValue, false, true)}</td>
                 ${inventoryClientCells}
+                <td class="py-3 px-4 text-right font-mono font-semibold bg-gray-50">${formatTonnes(inventoryQty, true)}</td>
                 <td class="py-3 px-4 bg-white"></td>
-                <td class="py-3 px-4 text-right font-mono font-semibold bg-white">${formatTonnes(inventoryQty, true)}</td>
             </tr>`;
         
         const tableRows = reportData.map((month) => {
@@ -1029,8 +1029,8 @@
                     <td class="py-3 px-4 text-right font-mono bg-amber-50">${formatCurrencyPerTon(p_avg_price, true)}</td>
                     <td class="py-3 px-4 text-right font-mono bg-amber-50 border-r-2 border-gray-400">${formatCurrency(month.purchase.total_v, false, true)}</td>
                     ${clientCells}
+                    <td class="py-3 px-4 text-right font-mono font-semibold ${balanceClass} bg-gray-50">${formatTonnes(runningBalance, true)}</td>
                     <td class="py-3 px-4 text-right font-mono font-semibold ${monthlyChangeClass} bg-white">${formatTonnesWithSign(month.monthlyChange, true)}</td>
-                    <td class="py-3 px-4 text-right font-mono font-semibold ${balanceClass} bg-white">${formatTonnes(runningBalance, true)}</td>
                 </tr>`;
         }).join('');
 
@@ -1063,8 +1063,8 @@
                         <th rowspan="2" class="py-3 px-4 text-left border-b border-r bg-gray-100 align-bottom">Mėnuo</th>
                         <th colspan="3" class="py-3 px-4 text-center border-b border-r-2 border-gray-400 bg-amber-100">Pirkimai</th>
                         ${clientHeaderHtml}
-                        <th rowspan="2" class="py-3 px-4 text-right border-b border-r bg-gray-100 align-bottom">Mėnesio +/-, t</th>
-                        <th rowspan="2" class="py-3 px-4 text-right border-b bg-gray-100 align-bottom">Likutis, t</th>
+                        <th rowspan="2" class="py-3 px-4 text-right border-b border-r bg-gray-100 align-bottom">Galima parduoti, t</th>
+                        <th rowspan="2" class="py-3 px-4 text-right border-b bg-gray-100 align-bottom">Mėnesio +/-, t</th>
                     </tr>
                     <tr>
                         <th class="py-3 px-4 text-right border-b border-r bg-amber-50">Kiekis, t</th>
@@ -1084,8 +1084,8 @@
                         <td class="py-4 px-4 text-right font-mono bg-amber-100">${formatCurrencyPerTon(grandTotalAvgPurchasePrice, true)}</td>
                         <td class="py-4 px-4 text-right font-mono bg-amber-100 border-r-2 border-gray-400">${formatCurrency(grandTotal.purchase_v, false, true)}</td>
                         ${clientTotalCells}
-                        <td class="py-4 px-4 text-right bg-gray-200"></td>
                         <td class="py-4 px-4 text-right font-mono text-base ${finalBalanceClass} bg-gray-200">${formatTonnes(finalBalance, true)}</td>
+                        <td class="py-4 px-4 text-right bg-gray-200"></td>
                     </tr>
                 </tfoot>
             </table>
