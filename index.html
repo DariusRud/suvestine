@@ -973,8 +973,6 @@
         const projectedSellPrice = parseFloat(document.getElementById('projected-sell-price').value.replace(',', '.')) || 0;
 
         const inventoryQty = parseFloat(document.getElementById('inventory-qty').value.replace(',', '.')) || 0;
-        const inventoryPrice = parseFloat(document.getElementById('inventory-price').value.replace(',', '.')) || 0;
-        const inventoryValue = inventoryQty * inventoryPrice;
 
         if (reportData.length === 0 && inventoryQty === 0) {
             container.innerHTML = `<p class="text-center text-gray-500 py-16">Nėra duomenų ataskaitai pagal pasirinktus filtrus.</p>`;
@@ -989,21 +987,6 @@
         clients.forEach(c => { grandTotal.clients[c] = {tonnes: 0, value: 0}; });
         let runningBalance = inventoryQty;
         
-        const inventoryProjectedSum = inventoryQty * projectedSellPrice;
-        const inventoryClientCells = clients.map((c, index) => 
-            `<td class="bg-green-50 ${index < clients.length - 1 ? 'border-r-2 border-gray-400' : ''}" colspan="3"></td>`
-        ).join('');
-
-        const inventoryRowHtml = `
-            <tr class="border-b border-gray-200 bg-blue-50">
-                <td class="py-3 px-4 text-left whitespace-nowrap font-bold text-blue-800 border-r-2 border-gray-400">Likutis sandėlyje (pradinis)</td>
-                ${inventoryClientCells}
-                <td class="py-3 px-4 text-right font-mono font-semibold bg-gray-50">${formatTonnes(inventoryQty, true)}</td>
-                <td class="py-3 px-4 text-right font-mono font-semibold bg-gray-50">${formatCurrencyPerTon(projectedSellPrice, true)}</td>
-                <td class="py-3 px-4 text-right font-mono font-semibold bg-gray-50">${formatCurrency(inventoryProjectedSum, false, true)}</td>
-                <td class="py-3 px-4 bg-white"></td>
-            </tr>`;
-        
         const tableRows = reportData.map((month) => {
             grandTotal.purchase_t += month.purchase.total_t;
             grandTotal.purchase_v += month.purchase.total_v;
@@ -1015,7 +998,6 @@
             runningBalance += month.monthlyChange;
             const projectedSum = runningBalance * projectedSellPrice;
             
-            const p_avg_price = month.purchase.total_t > 0 ? month.purchase.total_v / month.purchase.total_t : 0;
             const monthlyChangeClass = month.monthlyChange >= 0 ? 'text-green-600' : 'text-red-600';
             const balanceClass = runningBalance < 0 ? 'text-red-600' : 'text-gray-800';
 
@@ -1040,7 +1022,6 @@
                 </tr>`;
         }).join('');
 
-        const grandTotalAvgPurchasePrice = grandTotal.purchase_t > 0 ? grandTotal.purchase_v / grandTotal.purchase_t : 0;
         const finalBalance = inventoryQty + grandTotal.purchase_t - clients.reduce((sum, c) => sum + grandTotal.clients[c].tonnes, 0);
         const finalBalanceClass = finalBalance < 0 ? 'text-red-700' : 'text-gray-800';
         const finalProjectedSum = finalBalance * projectedSellPrice;
@@ -1079,7 +1060,6 @@
                     </tr>
                 </thead>
                 <tbody class="text-gray-700 font-light">
-                    ${(inventoryQty > 0 || reportData.length > 0) ? inventoryRowHtml : ''}
                     ${tableRows}
                 </tbody>
                 <tfoot class="text-gray-800 font-bold">
