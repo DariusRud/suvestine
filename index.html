@@ -672,7 +672,7 @@
     }
 
 
-    function renderDetailedReport(totalAvgProfitPerTon) {
+    function renderDetailedReport(totalAvgProfitPerTon, actualProfit) {
         const reportData = getDetailedMonthlyData();
         const container = document.getElementById('reports-content');
 
@@ -739,11 +739,12 @@
         
         const grandTotalAvgPurchasePrice = grandTotal.purchase_t > 0 ? grandTotal.purchase_v / grandTotal.purchase_t : 0;
         const grandTotalAvgSalePrice = grandTotal.sale_t > 0 ? grandTotal.sale_v / grandTotal.sale_t : 0;
-        const grandTotalProfitClass = grandTotal.profit >= 0 ? 'text-green-700' : 'text-red-700';
+        const actualProfitClass = actualProfit >= 0 ? 'text-green-700' : 'text-red-700';
         const finalBalance = inventoryQty + grandTotal.purchase_t - grandTotal.sale_t;
         const finalBalanceClass = finalBalance < 0 ? 'text-red-700' : 'text-gray-800';
 
         let forecastRowHtml = '';
+        let forecastProfit = 0;
         const projectedSellPrice = parseFloat(document.getElementById('projected-sell-price').value.replace(',', '.')) || 0;
         const projectedBuyPrice = parseFloat(document.getElementById('projected-buy-price').value.replace(',', '.')) || 0;
 
@@ -762,7 +763,6 @@
             const totalOpenPositionValue = contractOpenValueForProfit + inventoryTotalValueForProfit;
             const avgCostPrice = forecastQty > 0 ? totalOpenPositionValue / forecastQty : 0;
 
-            let forecastProfit = 0;
             if (forecastPrice > 0) {
                 forecastProfit = forecastSum - totalOpenPositionValue;
             }
@@ -790,7 +790,6 @@
             const avgSellPrice = contractData.totalSoldTonnes > 0 ? contractData.totalSoldValue / contractData.totalSoldTonnes : 0;
             const revenueForDeficit = forecastQty * avgSellPrice;
 
-            let forecastProfit = 0;
             if (forecastPrice > 0) {
                 forecastProfit = revenueForDeficit - forecastSum;
             }
@@ -811,6 +810,16 @@
                     <td class="py-4 px-4 text-right font-mono text-base ${profitClass} bg-gray-200">${formatCurrency(forecastProfit, true, true)}</td>
                 </tr>`;
         }
+
+        const finalProjectedProfit = actualProfit + forecastProfit;
+        const finalProjectedProfitClass = finalProjectedProfit >= 0 ? 'text-green-700' : 'text-red-700';
+
+        const finalTotalRowHtml = `
+            <tr class="bg-gray-200">
+                <td colspan="9" class="py-3 px-4 text-right font-bold text-base">Bendra Suma (su prognoze)</td>
+                <td class="py-3 px-4 text-right font-mono font-bold text-base ${finalProjectedProfitClass}">${formatCurrency(finalProjectedProfit, true, true)}</td>
+            </tr>
+        `;
 
         const totalAvgProfitClass = totalAvgProfitPerTon >= 0 ? 'text-green-700' : 'text-red-700';
         const finalAvgProfitRow = `
@@ -856,9 +865,10 @@
                         <td class="py-4 px-4 text-right font-mono bg-green-100">${formatCurrency(grandTotal.sale_v, false, true)}</td>
                         <td class="py-4 px-4 text-right bg-gray-200"></td>
                         <td class="py-4 px-4 text-right font-mono text-base ${finalBalanceClass} bg-gray-200">${formatTonnes(finalBalance, true)}</td>
-                        <td class="py-4 px-4 text-right font-mono text-base ${grandTotalProfitClass} bg-gray-200">${formatCurrency(grandTotal.profit, true, true)}</td>
+                        <td class="py-4 px-4 text-right font-mono text-base ${actualProfitClass} bg-gray-200">${formatCurrency(actualProfit, true, true)}</td>
                     </tr>
                     ${forecastRowHtml}
+                    ${finalTotalRowHtml}
                     ${finalAvgProfitRow}
                 </tfoot>
             </table>
@@ -1081,7 +1091,7 @@
             totalProfitPerTonContainer.classList.toggle('text-green-400', totalProfitPerTon >= 0);
         }
 
-        renderDetailedReport(totalProfitPerTon);
+        renderDetailedReport(totalProfitPerTon, actualProfit);
         checkSaveButtonState();
     }
     
